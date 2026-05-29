@@ -3,101 +3,72 @@
 
 /* ============ Framework summary banner ============ */
 function IntroBanner() {
+  const supplierDims = [
+    { name: 'Availability',     q: 'Share of searches where the supplier returned at least one valid rate',        code: 'F1 — No rate returned' },
+    { name: 'Competitiveness',  q: 'Share of searches where the supplier\'s rate was the best price available',    code: 'F2 — Uncompetitive rate' },
+    { name: 'Reliability',      q: 'Share of bookings that completed successfully with acceptable speed',           code: 'F3 — Booking failed · F4 — High latency' },
+  ];
+  const partnerDims = [
+    { name: 'Conversion rate',       q: 'Share of searches that result in a confirmed booking',                                          code: 'Conversion % · gap to 2.5% benchmark' },
+    { name: 'Funnel efficiency',     q: 'Step-by-step drop-off from search through to booking',                                          code: 'Show rate · click-through rate · step conversion' },
+    { name: 'Revenue contribution',  q: 'Partner\'s share of total GMV, margin, and recoverable demand lost to unsurfaced rates',         code: 'GMV · margin share % · F5 unsurfaced rate' },
+  ];
+  const failures = [
+    { code: 'F1', name: 'No rate',        q: 'Supplier returned no rate for the searched hotel',                        party: 'Supplier',          pc: 'var(--txt-3)' },
+    { code: 'F2', name: 'Uncompetitive',  q: 'Supplier returned a rate, but a cheaper alternative was available',       party: 'Supplier',          pc: 'var(--txt-3)' },
+    { code: 'F3', name: 'Booking failed', q: 'A booking attempt was initiated but did not complete successfully',        party: 'Supplier',          pc: 'var(--txt-3)' },
+    { code: 'F4', name: 'High latency',   q: 'Supplier response exceeded the acceptable latency threshold',              party: 'Supplier',          pc: 'var(--txt-3)' },
+    { code: 'F5', name: 'Not surfaced',   q: 'A competitive rate existed but was never shown to the partner',            party: 'Nuitee — platform', pc: 'var(--accent)' },
+    { code: 'F6', name: 'Dead search',    q: 'No competitive option was shown to any partner for this search',           party: 'Nuitee — platform', pc: 'var(--accent)' },
+  ];
   return (
     <section className="intro">
       <h2 className="intro-title">How to read this dashboard</h2>
 
-      <div className="intro-block">
-        <div className="intro-block-label">Supplier performance — health scored 0–100, three dimensions weighted equally</div>
-        <table className="intro-table">
-          <thead>
-            <tr><th>Dimension</th><th>Definition</th><th>Relevant failures measured</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><b>Availability</b></td>
-              <td>Share of searches where the supplier returned at least one valid rate</td>
-              <td><span className="fcode">F1</span> No rate returned</td>
-            </tr>
-            <tr>
-              <td><b>Competitiveness</b></td>
-              <td>Share of searches where the supplier's rate was the best price available</td>
-              <td><span className="fcode">F2</span> Uncompetitive rate</td>
-            </tr>
-            <tr>
-              <td><b>Reliability</b></td>
-              <td>Share of bookings that completed successfully with acceptable speed</td>
-              <td><span className="fcode">F3</span> Booking failed &nbsp;<span className="fcode">F4</span> High latency</td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="intro-group">
+        <div className="intro-group-label">Supplier performance — health scored 0–100, three dimensions weighted equally</div>
+        <div className="intro-pillars">
+          {supplierDims.map(p => (
+            <div className="intro-pillar" key={p.name}>
+              <div className="intro-pillar-h">
+                <span className="intro-pillar-name">{p.name}</span>
+                <span className="intro-pillar-w">⅓</span>
+              </div>
+              <div className="intro-pillar-q">{p.q}</div>
+              <div className="intro-pillar-code">{p.code}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="intro-block">
-        <div className="intro-block-label">Partner performance — primary signal: booking conversion vs 2.5% platform benchmark</div>
-        <table className="intro-table">
-          <thead>
-            <tr><th>Dimension</th><th>Definition</th><th>Relevant metrics</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><b>Conversion rate</b></td>
-              <td>Share of searches that result in a confirmed booking</td>
-              <td>Conversion %, gap to 2.5% benchmark</td>
-            </tr>
-            <tr>
-              <td><b>Funnel efficiency</b></td>
-              <td>Step-by-step drop-off from search through to booking</td>
-              <td>Show rate, click-through rate, step conversion</td>
-            </tr>
-            <tr>
-              <td><b>Revenue contribution</b></td>
-              <td>Partner's share of total GMV, margin, and recoverable demand lost to unsurfaced rates</td>
-              <td>GMV, margin share %, F5 unsurfaced rate</td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="intro-group">
+        <div className="intro-group-label">Partner performance — primary signal: booking conversion vs 2.5% platform benchmark</div>
+        <div className="intro-pillars">
+          {partnerDims.map(p => (
+            <div className="intro-pillar" key={p.name}>
+              <div className="intro-pillar-h">
+                <span className="intro-pillar-name">{p.name}</span>
+              </div>
+              <div className="intro-pillar-q">{p.q}</div>
+              <div className="intro-pillar-code">{p.code}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="intro-block">
-        <div className="intro-block-label">Failure types — F1–F4 are supplier-side; F5 and F6 are within Nuitee's control</div>
-        <table className="intro-table">
-          <thead>
-            <tr><th>Type</th><th>Definition</th><th>Relevant party</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span className="fcode">F1</span> No rate</td>
-              <td>Supplier returned no rate for the searched hotel</td>
-              <td>Supplier</td>
-            </tr>
-            <tr>
-              <td><span className="fcode">F2</span> Uncompetitive</td>
-              <td>Supplier returned a rate, but a cheaper alternative was available</td>
-              <td>Supplier</td>
-            </tr>
-            <tr>
-              <td><span className="fcode">F3</span> Booking failed</td>
-              <td>A booking attempt was initiated but did not complete successfully</td>
-              <td>Supplier</td>
-            </tr>
-            <tr>
-              <td><span className="fcode">F4</span> High latency</td>
-              <td>Supplier response exceeded the acceptable latency threshold</td>
-              <td>Supplier</td>
-            </tr>
-            <tr>
-              <td><span className="fcode">F5</span> Not surfaced</td>
-              <td>A competitive rate existed but was never shown to the partner</td>
-              <td>Nuitee — platform</td>
-            </tr>
-            <tr>
-              <td><span className="fcode">F6</span> Dead search</td>
-              <td>No competitive option was shown to any partner for this search</td>
-              <td>Nuitee — platform</td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="intro-group">
+        <div className="intro-group-label">Failure types — F1–F4 are supplier-side · F5 and F6 are within Nuitee's control</div>
+        <div className="intro-pillars intro-pillars-6">
+          {failures.map(f => (
+            <div className="intro-pillar" key={f.code}>
+              <div className="intro-pillar-h">
+                <span className="intro-pillar-name"><span className="fcode">{f.code}</span> {f.name}</span>
+                <span className="intro-pillar-party" style={{ color: f.pc }}>{f.party}</span>
+              </div>
+              <div className="intro-pillar-q">{f.q}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
