@@ -203,4 +203,9 @@
     if (failRate <= a) return 'amber';
     return 'red';
   };
+
+  // Health score RAG: fixed thresholds on 0–100 scale
+  window.healthRag = function (h) {
+    return h >= 90 ? 'green' : h >= 80 ? 'amber' : 'red';
+  };
 })();

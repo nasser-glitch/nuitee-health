@@ -94,12 +94,13 @@ function FillBar({ value, max, color = 'var(--accent)', height = 6, width = '100
 }
 
 /* ---- Pill metric bar: label + value with inline fill ---- */
-function MetricPill({ label, value, color }) {
+function MetricPill({ label, value, color, dp }) {
   const pct = Math.max(4, Math.min(100, value));
+  const formatted = dp != null ? Number(value).toFixed(dp) : value.toFixed(value >= 99.95 ? 2 : value >= 10 ? 0 : 1);
   return (
     <div className="metric-pill">
       <div className="metric-pill-fill" style={{ width: pct + '%', background: color, opacity: 0.16 }} />
-      <span className="metric-pill-val" style={{ color }}>{value.toFixed(value >= 99.95 ? 2 : value >= 10 ? 0 : 1)}%</span>
+      <span className="metric-pill-val" style={{ color }}>{formatted}%</span>
       <span className="metric-pill-lbl">{label}</span>
     </div>
   );

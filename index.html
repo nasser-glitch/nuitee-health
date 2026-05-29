@@ -88,6 +88,15 @@ html[data-density="compact"] .content{ gap:14px; padding:18px 22px; }
 .intro-pillar-q{ font-size:12.5px; color:var(--txt-1); margin-top:8px; line-height:1.45; }
 .intro-pillar-code{ font-size:10.5px; color:var(--txt-1); margin-top:9px; font-family:'JetBrains Mono',monospace; }
 
+/* ---------- panel info toggle ---------- */
+.panel-info-btn{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px; background:var(--surface-2); border:1px solid var(--border); border-radius:7px; font-size:11.5px; font-weight:600; color:var(--txt-2); transition:border-color .12s,color .12s; }
+.panel-info-btn:hover,.panel-info-btn.active{ border-color:var(--accent); color:var(--accent); }
+.panel-info-btn .info-dot{ border-color:currentColor; color:currentColor; }
+.panel-info-body{ background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:18px 20px; margin-bottom:18px; }
+.panel-info-label{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--txt-3); margin-bottom:11px; }
+.platform-badge{ cursor:pointer; }
+.platform-badge.active{ background:color-mix(in srgb,var(--accent) 20%,transparent); border-color:color-mix(in srgb,var(--accent) 50%,transparent); }
+
 /* ---------- section 1 cards ---------- */
 .cards-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap); }
 .sum-card{ position:relative; display:flex; text-align:left; background:var(--surface); border:1px solid var(--border);
@@ -133,7 +142,11 @@ html[data-density="compact"] .row{ padding:8px 8px; gap:14px; }
 .row:last-child{ border-bottom:none; }
 .row:hover{ background:var(--surface-2); }
 .sup-row{ grid-template-columns:140px 1fr auto; }
-.part-row{ grid-template-columns:150px auto 1fr auto; }
+.part-row{ grid-template-columns:150px 1fr auto auto; }
+.part-metrics{ display:flex; gap:22px; }
+.part-metric{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.part-metric-val{ font-size:14px; font-weight:600; color:var(--txt-1); }
+.part-metric-lbl{ font-size:9.5px; color:var(--txt-3); text-transform:uppercase; letter-spacing:.06em; }
 .row-name{ display:flex; flex-direction:column; gap:2px; min-width:0; }
 .row-name-txt{ font-size:15px; font-weight:600; }
 .row-meta{ font-size:11.5px; color:var(--txt-2); white-space:nowrap; }

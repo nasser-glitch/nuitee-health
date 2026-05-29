@@ -53,7 +53,7 @@ function SupplierDrawer({ data, rag, name }) {
     <div className="d-body">
       <div className="d-head">
         <div className="d-eyebrow">Supplier</div>
-        <div className="d-title-row"><h3 className="d-title">{sup.name}</h3><HealthScore value={sup.health} rag={rag(fr)} size="lg" /></div>
+        <div className="d-title-row"><h3 className="d-title">{sup.name}</h3><HealthScore value={sup.health} rag={healthRag(sup.health)} size="lg" /></div>
         <div className="d-substat">{NF.int(sup.searches)} searches · p95 {NF.int(sup.p95)}ms · combined failure {NF.pct(fr)}</div>
       </div>
       <DSection title="Failure breakdown" note="share of failures">
@@ -63,6 +63,18 @@ function SupplierDrawer({ data, rag, name }) {
             {donut.map((d, i) => <div key={i} className="legend-item"><span className="legend-swatch" style={{ background: d.color }} /><span className="legend-name">{d.label}</span><span className="legend-val">{NF.int(d.value)}</span></div>)}
           </div>
         </div>
+        {(sup.f3 > 0 || sup.f4 > 0) && (
+          <div className="d-statpair" style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+            <div>
+              <span>Booking failures (F3)</span>
+              <b style={{ color: sup.f3 > 0 ? 'var(--rag-red)' : 'var(--txt-1)' }}>{NF.int(sup.f3)}</b>
+            </div>
+            <div>
+              <span>High latency events (F4)</span>
+              <b style={{ color: sup.f4 > 0 ? 'var(--rag-amber)' : 'var(--txt-1)' }}>{NF.int(sup.f4)}</b>
+            </div>
+          </div>
+        )}
       </DSection>
       <DSection title="Week-on-week trend">
         <div className="spark-grid">
@@ -172,10 +184,10 @@ function PartnerDrawer({ data, rag, name }) {
       </DSection>
       <div className="d-2col">
         <DSection title="Best-served by">
-          <div className="rank-list">{p.bestSuppliers.map((s, i) => <div key={i} className="rank-item"><span>{s.supplier}</span><HealthScore value={s.health} rag={rag(100 - s.health)} size="sm" /></div>)}</div>
+          <div className="rank-list">{p.bestSuppliers.map((s, i) => <div key={i} className="rank-item"><span>{s.supplier}</span><HealthScore value={s.health} rag={healthRag(s.health)} size="sm" /></div>)}</div>
         </DSection>
         <DSection title="Worst-served by">
-          <div className="rank-list">{p.worstSuppliers.map((s, i) => <div key={i} className="rank-item"><span>{s.supplier}</span><HealthScore value={s.health} rag={rag(100 - s.health)} size="sm" /></div>)}</div>
+          <div className="rank-list">{p.worstSuppliers.map((s, i) => <div key={i} className="rank-item"><span>{s.supplier}</span><HealthScore value={s.health} rag={healthRag(s.health)} size="sm" /></div>)}</div>
         </DSection>
       </div>
     </div>
@@ -209,7 +221,7 @@ function CellDrawer({ data, rag, partner, supplier }) {
     <div className="d-body">
       <div className="d-head">
         <div className="d-eyebrow">Lane</div>
-        <div className="d-title-row"><h3 className="d-title">{partner} <span className="d-x">×</span> {supplier}</h3><HealthScore value={c.health} rag={rag(fr)} size="lg" /></div>
+        <div className="d-title-row"><h3 className="d-title">{partner} <span className="d-x">×</span> {supplier}</h3><HealthScore value={c.health} rag={healthRag(c.health)} size="lg" /></div>
         <div className="d-substat">{NF.int(c.searches)} searches · {c.booked} booked · {NF.pct(c.conv, 2)} conversion</div>
       </div>
       <DSection title="Health components">

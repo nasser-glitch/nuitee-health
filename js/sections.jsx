@@ -1,78 +1,6 @@
 /* Dashboard sections: SummaryCards, SupplierPanel, PartnerPanel, PlatformHealth, Matrix.
    `onOpen(payload)` opens the side drawer. `rag(failRate)` colors by current thresholds. */
 
-/* ============ Framework summary banner ============ */
-function IntroBanner() {
-  const supplierDims = [
-    { name: 'Availability',     q: 'Share of searches where the supplier returned at least one valid rate',        code: 'F1 — No rate returned' },
-    { name: 'Competitiveness',  q: 'Share of searches where the supplier\'s rate was the best price available',    code: 'F2 — Uncompetitive rate' },
-    { name: 'Reliability',      q: 'Share of bookings that completed successfully with acceptable speed',           code: 'F3 — Booking failed · F4 — High latency' },
-  ];
-  const partnerDims = [
-    { name: 'Engagement',  q: 'Is the partner searching actively? Volume trend over the period — growing, flat, or dropping.',                                         code: 'Search volume · volume trend (↑ / flat / ↓)' },
-    { name: 'Conversion',  q: 'Of searches where a rate was shown, how many became bookings? A low click→book rate signals rates aren\'t competitive for their users.', code: 'Booked ÷ shown · click→book rate' },
-    { name: 'Value',       q: 'Average booking value and margin contribution. High volume with thin margins is a different problem to low volume with strong margins.',  code: 'Avg booking value · GMV · margin share %' },
-  ];
-  const failures = [
-    { code: 'F1', name: 'No rate',        q: 'Supplier returned no rate for the searched hotel',                        party: 'Supplier',          pc: 'var(--txt-3)' },
-    { code: 'F2', name: 'Uncompetitive',  q: 'Supplier returned a rate, but a cheaper alternative was available',       party: 'Supplier',          pc: 'var(--txt-3)' },
-    { code: 'F3', name: 'Booking failed', q: 'A booking attempt was initiated but did not complete successfully',        party: 'Supplier',          pc: 'var(--txt-3)' },
-    { code: 'F4', name: 'High latency',   q: 'Supplier response exceeded the acceptable latency threshold',              party: 'Supplier',          pc: 'var(--txt-3)' },
-    { code: 'F5', name: 'Not surfaced',   q: 'A competitive rate existed but was never shown to the partner',            party: 'Nuitee — platform', pc: 'var(--accent)' },
-    { code: 'F6', name: 'Dead search',    q: 'No competitive option was shown to any partner for this search',           party: 'Nuitee — platform', pc: 'var(--accent)' },
-  ];
-  return (
-    <section className="intro">
-      <h2 className="intro-title">How to read this dashboard</h2>
-
-      <div className="intro-group">
-        <div className="intro-group-label">Supplier performance — health scored 0–100, three dimensions weighted equally</div>
-        <div className="intro-pillars">
-          {supplierDims.map((p, i) => (
-            <div className="intro-pillar" key={p.name}>
-              <div className="intro-pillar-h">
-                <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
-              </div>
-              <div className="intro-pillar-q">{p.q}</div>
-              <div className="intro-pillar-code">{p.code}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="intro-group">
-        <div className="intro-group-label">Partner performance — three dimensions: engagement, conversion, value</div>
-        <div className="intro-pillars">
-          {partnerDims.map((p, i) => (
-            <div className="intro-pillar" key={p.name}>
-              <div className="intro-pillar-h">
-                <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
-              </div>
-              <div className="intro-pillar-q">{p.q}</div>
-              <div className="intro-pillar-code">{p.code}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="intro-group">
-        <div className="intro-group-label">Failure types — F1–F4 are supplier-side · F5 and F6 are within Nuitee's control</div>
-        <div className="intro-pillars intro-pillars-6">
-          {failures.map(f => (
-            <div className="intro-pillar" key={f.code}>
-              <div className="intro-pillar-h">
-                <span className="intro-pillar-name"><span className="intro-fcode">{f.code}</span> {f.name}</span>
-                <span className="intro-pillar-party">{f.party}</span>
-              </div>
-              <div className="intro-pillar-q">{f.q}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ============ SECTION 1 — Summary cards ============ */
 function SummaryCards({ data, rag, onOpen, onFocus, active }) {
   const s = data.summary;
@@ -122,6 +50,18 @@ function SummaryCards({ data, rag, onOpen, onFocus, active }) {
 
 /* ============ SECTION 2 — Supplier panel ============ */
 function SupplierPanel({ data, rag, onOpen }) {
+  const [showInfo, setShowInfo] = React.useState(false);
+  const dims = [
+    { name: 'Availability',    q: 'Share of searches where the supplier returned at least one valid rate',      code: 'F1 — No rate returned' },
+    { name: 'Competitiveness', q: 'Share of searches where the supplier\'s rate was the best price available',  code: 'F2 — Uncompetitive rate' },
+    { name: 'Reliability',     q: 'Share of bookings that completed successfully with acceptable speed',         code: 'F3 — Booking failed · F4 — High latency' },
+  ];
+  const failures = [
+    { code: 'F1', name: 'No rate',        q: 'Supplier returned no rate for the searched hotel' },
+    { code: 'F2', name: 'Uncompetitive',  q: 'Supplier returned a rate, but a cheaper alternative was available' },
+    { code: 'F3', name: 'Booking failed', q: 'A booking attempt was initiated but did not complete successfully' },
+    { code: 'F4', name: 'High latency',   q: 'Supplier response exceeded the acceptable latency threshold' },
+  ];
   return (
     <section className="panel">
       <div className="panel-head">
@@ -129,21 +69,53 @@ function SupplierPanel({ data, rag, onOpen }) {
           <h2 className="panel-title">Supplier performance</h2>
           <span className="panel-sub">{data.suppliers.length} suppliers · ranked worst → best</span>
         </div>
-        <span className="panel-tag">last 30 days</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className={'panel-info-btn' + (showInfo ? ' active' : '')} onClick={() => setShowInfo(!showInfo)}>
+            <span className="info-dot">i</span> How scored
+          </button>
+          <span className="panel-tag">last 30 days</span>
+        </div>
       </div>
+      {showInfo && (
+        <div className="panel-info-body">
+          <div className="panel-info-label">Three dimensions — weighted equally · health scored 0–100</div>
+          <div className="intro-pillars" style={{ marginBottom: 16 }}>
+            {dims.map((p, i) => (
+              <div className="intro-pillar" key={p.name}>
+                <div className="intro-pillar-h">
+                  <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
+                </div>
+                <div className="intro-pillar-q">{p.q}</div>
+                <div className="intro-pillar-code">{p.code}</div>
+              </div>
+            ))}
+          </div>
+          <div className="panel-info-label">Failure codes — F1–F4 are supplier-side</div>
+          <div className="intro-pillars" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+            {failures.map(f => (
+              <div className="intro-pillar" key={f.code}>
+                <div className="intro-pillar-h">
+                  <span className="intro-pillar-name"><span className="intro-fcode">{f.code}</span> {f.name}</span>
+                </div>
+                <div className="intro-pillar-q">{f.q}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="rows">
         {data.suppliers.map(sup => (
           <button key={sup.name} className="row sup-row" onClick={() => onOpen({ type: 'supplier', name: sup.name })}>
             <div className="row-name">
               <span className="row-name-txt">{sup.name}</span>
-              <span className="row-meta">p95 {NF.int(sup.p95)}ms · {NF.int(sup.searches)} searches</span>
+              <span className="row-meta">{NF.int(sup.searches)} searches</span>
             </div>
             <div className="sup-pills">
               <MetricPill label="available" value={sup.availability} color="var(--accent)" />
               <MetricPill label="competitive" value={sup.competitiveness} color="var(--accent-2)" />
-              <MetricPill label="reliable" value={sup.reliability} color="var(--accent)" />
+              <MetricPill label="reliable" value={sup.reliability} color="var(--accent)" dp={2} />
             </div>
-            <HealthScore value={sup.health} rag={rag(100 - sup.health)} />
+            <HealthScore value={sup.health} rag={healthRag(sup.health)} />
           </button>
         ))}
       </div>
@@ -153,7 +125,13 @@ function SupplierPanel({ data, rag, onOpen }) {
 
 /* ============ SECTION 2 — Partner panel ============ */
 function PartnerPanel({ data, rag, onOpen }) {
+  const [showInfo, setShowInfo] = React.useState(false);
   const partners = [...data.partners].sort((a, b) => a.conv - b.conv);
+  const dims = [
+    { name: 'Engagement', q: 'Is the partner searching actively? Volume trend over the period — growing, flat, or dropping.',                                         code: 'Search volume · volume trend (↑ / flat / ↓)' },
+    { name: 'Conversion', q: 'Of searches where a rate was shown, how many became bookings? A low click→book rate signals rates aren\'t competitive for their users.', code: 'Booked ÷ shown · click→book rate' },
+    { name: 'Value',      q: 'Average booking value and margin contribution. High volume with thin margins is a different problem to low volume with strong margins.',  code: 'Avg booking value · GMV · margin share %' },
+  ];
   return (
     <section className="panel">
       <div className="panel-head">
@@ -161,8 +139,29 @@ function PartnerPanel({ data, rag, onOpen }) {
           <h2 className="panel-title">Partner performance</h2>
           <span className="panel-sub">{partners.length} partners · ranked worst → best</span>
         </div>
-        <span className="panel-tag">conversion</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className={'panel-info-btn' + (showInfo ? ' active' : '')} onClick={() => setShowInfo(!showInfo)}>
+            <span className="info-dot">i</span> How scored
+          </button>
+          <span className="panel-tag">conversion</span>
+        </div>
       </div>
+      {showInfo && (
+        <div className="panel-info-body">
+          <div className="panel-info-label">Three dimensions — engagement, conversion, value</div>
+          <div className="intro-pillars">
+            {dims.map((p, i) => (
+              <div className="intro-pillar" key={p.name}>
+                <div className="intro-pillar-h">
+                  <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
+                </div>
+                <div className="intro-pillar-q">{p.q}</div>
+                <div className="intro-pillar-code">{p.code}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="rows">
         {partners.map(p => {
           const convRag = p.conv >= 2.5 ? 'green' : p.conv >= 1.6 ? 'amber' : 'red';
@@ -170,15 +169,24 @@ function PartnerPanel({ data, rag, onOpen }) {
             <button key={p.name} className="row part-row" onClick={() => onOpen({ type: 'partner', name: p.name })}>
               <div className="row-name">
                 <span className="row-name-txt">{p.name}</span>
-                <span className="row-meta">{NF.int(p.searched)} searches</span>
+              </div>
+              <div className="part-metrics">
+                <div className="part-metric">
+                  <span className="part-metric-val">{NF.int(p.searched)}</span>
+                  <span className="part-metric-lbl">searches</span>
+                </div>
+                <div className="part-metric">
+                  <span className="part-metric-val">{NF.int(p.booked)}</span>
+                  <span className="part-metric-lbl">bookings</span>
+                </div>
+                <div className="part-metric">
+                  <span className="part-metric-val">{NF.money(p.revenue)}</span>
+                  <span className="part-metric-lbl">GMV</span>
+                </div>
               </div>
               <div className="part-funnel">
                 <TrendArrow dir={p.engagement} />
                 <span className="part-eng-lbl">{p.engagement === 'up' ? 'growing' : p.engagement === 'down' ? 'falling' : 'stable'}</span>
-              </div>
-              <div className="part-margin">
-                <span className="part-margin-lbl">avg booking</span>
-                <span className="part-avbv">{NF.money(p.avgBookingValue)}</span>
               </div>
               <span className="part-conv" style={{ color: ragColor(convRag) }}>{NF.pct(p.conv, 2)}</span>
             </button>
@@ -193,6 +201,11 @@ function PartnerPanel({ data, rag, onOpen }) {
 function PlatformHealth({ data, onOpen, expandedRef }) {
   const pf = data.platform;
   const [open, setOpen] = React.useState(null);
+  const [showInfo, setShowInfo] = React.useState(false);
+  const failures = [
+    { code: 'F5', name: 'Not surfaced', q: 'A competitive rate existed but was never shown to the partner',   party: 'Nuitee — platform' },
+    { code: 'F6', name: 'Dead search',  q: 'No competitive option was shown to any partner for this search', party: 'Nuitee — platform' },
+  ];
   const partnerColors = {};
   window.NUITEE_PARTNERS.forEach((p, i) => { partnerColors[p] = `hsl(${210 + i * 26} 70% ${58 - i * 2}%)`; });
   const supplierColors = {};
@@ -204,11 +217,27 @@ function PlatformHealth({ data, onOpen, expandedRef }) {
       <div className="panel-head">
         <div className="platform-titlewrap">
           <h2 className="panel-title">Platform health</h2>
-          <span className="platform-badge" title="These failures are within Nuitee's control — not the supplier's">
+          <button className={'platform-badge' + (showInfo ? ' active' : '')} onClick={() => setShowInfo(!showInfo)}>
             <span className="info-dot">i</span> within Nuitee's control
-          </span>
+          </button>
         </div>
       </div>
+      {showInfo && (
+        <div className="panel-info-body" style={{ background: 'var(--surface-2)', borderColor: '#2c3a50', marginBottom: 20 }}>
+          <div className="panel-info-label">Failure codes — F5 and F6 are within Nuitee's control</div>
+          <div className="intro-pillars" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            {failures.map(f => (
+              <div className="intro-pillar" key={f.code}>
+                <div className="intro-pillar-h">
+                  <span className="intro-pillar-name"><span className="intro-fcode">{f.code}</span> {f.name}</span>
+                  <span className="intro-pillar-party">{f.party}</span>
+                </div>
+                <div className="intro-pillar-q">{f.q}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="platform-grid">
         <div className={'platform-metric' + (open === 'f5' ? ' open' : '')}>
           <div className="platform-big">{NF.pct(pf.f5rate)}</div>
@@ -261,7 +290,7 @@ function Matrix({ data, rag, cellStyle, onOpen }) {
 
   function cellVisual(c) {
     if (!c) return { bg: 'transparent', border: 'var(--border)', text: 'var(--txt-3)', rag: null };
-    const r = rag(c.failRate); const col = ragColor(r);
+    const r = healthRag(c.health); const col = ragColor(r);
     return { rag: r, col };
   }
   return (
@@ -296,12 +325,12 @@ function Matrix({ data, rag, cellStyle, onOpen }) {
                     </td>
                   );
                 })}
-                <td className="mx-total"><TotalChip value={rowHealth[p]} rag={rag(100 - rowHealth[p])} /></td>
+                <td className="mx-total"><TotalChip value={rowHealth[p]} rag={healthRag(rowHealth[p])} /></td>
               </tr>
             ))}
             <tr className="mx-totalrow">
               <th className="mx-rowh">Supplier</th>
-              {cols.map(s => <td key={s} className="mx-total"><TotalChip value={colHealth[s]} rag={rag(100 - colHealth[s])} /></td>)}
+              {cols.map(s => <td key={s} className="mx-total"><TotalChip value={colHealth[s]} rag={healthRag(colHealth[s])} /></td>)}
               <td className="mx-total"></td>
             </tr>
           </tbody>
@@ -343,4 +372,4 @@ function MatrixTip({ p, s, c }) {
   );
 }
 
-Object.assign(window, { IntroBanner, SummaryCards, SupplierPanel, PartnerPanel, PlatformHealth, Matrix });
+Object.assign(window, { SummaryCards, SupplierPanel, PartnerPanel, PlatformHealth, Matrix });

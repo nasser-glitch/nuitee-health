@@ -202,7 +202,6 @@ function App() {
       </header>
 
       <main className="content">
-        <IntroBanner />
         <SummaryCards data={data} rag={rag} onOpen={openDrawer} onFocus={focus} active={activeCard} />
         <div className="dual" ref={partRef}>
           <SupplierPanel data={data} rag={rag} onOpen={openDrawer} />
@@ -212,8 +211,6 @@ function App() {
         <Matrix data={data} rag={rag} cellStyle={t.matrixStyle} onOpen={openDrawer} />
         <div style={{ height: 60 }} />
       </main>
-
-      <Legend g={t.ragGreen} a={t.ragAmber} />
 
       {drawer && <Drawer payload={drawer} data={data} rag={rag} onClose={() => setDrawer(null)} />}
 
@@ -227,17 +224,6 @@ function App() {
         <TweakSlider label="Green below" value={t.ragGreen} min={5} max={30} step={1} unit="%" onChange={v => setTweak('ragGreen', Math.min(v, t.ragAmber - 1))} />
         <TweakSlider label="Red above" value={t.ragAmber} min={20} max={55} step={1} unit="%" onChange={v => setTweak('ragAmber', Math.max(v, t.ragGreen + 1))} />
       </TweaksPanel>
-    </div>
-  );
-}
-
-function Legend({ g, a }) {
-  return (
-    <div className="legend-fixed">
-      <span className="legend-fixed-title">Combined failure rate</span>
-      <div className="legend-fixed-row"><span className="legend-swatch" style={{ background: 'var(--rag-green)' }} /> Healthy &lt; {g}%</div>
-      <div className="legend-fixed-row"><span className="legend-swatch" style={{ background: 'var(--rag-amber)' }} /> Watch {g}–{a}%</div>
-      <div className="legend-fixed-row"><span className="legend-swatch" style={{ background: 'var(--rag-red)' }} /> Critical &gt; {a}%</div>
     </div>
   );
 }
