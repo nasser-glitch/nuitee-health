@@ -136,6 +136,13 @@ function App() {
     document.documentElement.dataset.density = t.density;
   }, [t.accent, t.density]);
 
+  const EVENTS = csvMeta ? (window.NUITEE_EVENTS || []) : [];
+  const maxDay = EVENTS.length ? EVENTS.reduce((m, e) => Math.max(m, e[9]), 1) : 1;
+  const dayFrom = Math.max(1, maxDay - rangeDays + 1), dayTo = maxDay;
+  const filterOpts = React.useMemo(() => ({ partners: selP, suppliers: selS, dayFrom, dayTo }), [selP, selS, dayFrom, dayTo]);
+  const data = React.useMemo(() => EVENTS.length ? window.aggregate(EVENTS, filterOpts) : null, [EVENTS, filterOpts]);
+  const rag = React.useCallback(fr => window.ragOf(fr, t.ragGreen, t.ragAmber), [t.ragGreen, t.ragAmber]);
+
   if (!csvMeta) {
     return (
       <>
@@ -149,15 +156,8 @@ function App() {
     );
   }
 
-  const EVENTS = window.NUITEE_EVENTS;
   const PARTNERS = window.NUITEE_PARTNERS, SUPPLIERS = window.NUITEE_SUPPLIERS;
   const dateLabel = window.NUITEE_DATE_LABEL || '';
-
-  const maxDay = EVENTS.reduce((m, e) => Math.max(m, e[9]), 1);
-  const dayFrom = Math.max(1, maxDay - rangeDays + 1), dayTo = maxDay;
-  const filterOpts = React.useMemo(() => ({ partners: selP, suppliers: selS, dayFrom, dayTo }), [selP, selS, dayFrom, dayTo]);
-  const data = React.useMemo(() => window.aggregate(EVENTS, filterOpts), [filterOpts]);
-  const rag = React.useCallback(fr => window.ragOf(fr, t.ragGreen, t.ragAmber), [t.ragGreen, t.ragAmber]);
 
   const focus = id => {
     const el = id === 'platform' ? platRef.current : partRef.current;
