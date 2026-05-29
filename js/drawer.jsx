@@ -77,10 +77,11 @@ function SupplierDrawer({ data, rag, name }) {
         )}
       </DSection>
       <DSection title="Week-on-week trend">
-        <div className="spark-grid">
+        <div className="spark-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
           <SparkStat label="Availability" series={sup.weekly.map(w => w && w.avail)} last={sup.availability} color="var(--accent)" />
           <SparkStat label="Competitiveness" series={sup.weekly.map(w => w && w.compet)} last={sup.competitiveness} color="var(--accent-2)" />
           <SparkStat label="Reliability" series={sup.weekly.map(w => w && w.rel)} last={sup.reliability} color="var(--accent)" dp={0} />
+          <SparkStat label="Latency" series={[]} last={sup.latency} color="var(--accent-2)" dp={0} />
         </div>
       </DSection>
       <div className="d-2col">
@@ -225,10 +226,11 @@ function CellDrawer({ data, rag, partner, supplier }) {
         <div className="d-substat">{NF.int(c.searches)} searches · {c.booked} booked · {NF.pct(c.conv, 2)} conversion</div>
       </div>
       <DSection title="Health components">
-        <div className="metric-cards">
+        <div className="metric-cards" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
           <div className="metric-card"><span className="mc-lbl">Availability</span><span className="mc-val" style={{ color: 'var(--accent)' }}>{NF.pct(c.availability)}</span></div>
           <div className="metric-card"><span className="mc-lbl">Competitiveness</span><span className="mc-val" style={{ color: 'var(--accent-2)' }}>{NF.pct(c.competitiveness)}</span></div>
           <div className="metric-card"><span className="mc-lbl">Reliability</span><span className="mc-val" style={{ color: 'var(--accent)' }}>{NF.pct(c.reliability)}</span></div>
+          <div className="metric-card"><span className="mc-lbl">Latency</span><span className="mc-val" style={{ color: 'var(--accent-2)' }}>{NF.pct(c.latency)}</span></div>
         </div>
       </DSection>
       <div className={'cmp-callout ' + (diff >= 0 ? 'good' : 'bad')}>

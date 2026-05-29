@@ -4,17 +4,15 @@
 /* ============ SECTION 1 — Summary cards ============ */
 function SummaryCards({ data, rag, onOpen, onFocus, active }) {
   const s = data.summary;
-  const convRag = s.bookingConv >= s.bookingBenchmark ? 'green' : s.bookingConv >= s.bookingBenchmark * 0.9 ? 'amber' : 'red';
-  const riskRag = s.revenueAtRisk > 100000 ? 'red' : s.revenueAtRisk > 40000 ? 'amber' : 'green';
-  const deadRag = rag(s.deadSearchRate);
-  const statusTxt = { green: 'Healthy', amber: 'Watch', red: 'Critical' };
+  const convRag = s.bookingConv >= s.bookingBenchmark ? ‘green’ : s.bookingConv >= s.bookingBenchmark * 0.9 ? ‘amber’ : ‘red’;
+  const riskRag = s.revenueAtRisk > 100000 ? ‘red’ : s.revenueAtRisk > 40000 ? ‘amber’ : ‘green’;
+  const statusTxt = { green: ‘Healthy’, amber: ‘Watch’, red: ‘Critical’ };
   const cards = [
-    { key: 'searches', neutral: true, value: NF.int(s.totalSearches), label: 'Total searches', status: 'Volume', desc: 'Search requests routed across all partners and suppliers in the period.', action: null },
-    { key: 'conv', rag: convRag, value: NF.pct(s.bookingConv, 2), label: 'Booking conversion', desc: `Share of searches ending in a confirmed booking, against the ${s.bookingBenchmark}% platform benchmark.`, delta: s.bookingConv - s.bookingBenchmark, action: () => onFocus('partners') },
-    { key: 'risk', rag: riskRag, value: NF.money(s.revenueAtRisk), label: 'Estimated revenue at risk', desc: 'Monthly GMV we’d likely recover if the competitive rates we failed to surface (F3) had been shown.', tip: s.revenueAtRiskAssumption, action: () => onFocus('platform') },
-    { key: 'supplier', rag: 'red', value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ' fail', label: 'Worst performing supplier', desc: 'Highest combined failure rate across availability, competitiveness and reliability.', action: () => onOpen({ type: 'supplier', name: s.topFailingSupplier.name }) },
-    { key: 'partner', rag: 'amber', value: s.topFailingPartner.name, big: false, valuePct: NF.pct(s.topFailingPartner.conv, 2) + ' conv', label: 'Worst performing partner', desc: 'Demand partner with the lowest booking conversion — the biggest missed-conversion gap.', action: () => onOpen({ type: 'partner', name: s.topFailingPartner.name }) },
-    { key: 'dead', rag: deadRag, value: NF.pct(s.deadSearchRate, 2), label: 'Dead search rate', desc: 'Searches where no competitive option reached any partner at all (failure mode F6).', action: () => onFocus('platform') },
+    { key: ‘searches’, neutral: true, value: NF.int(s.totalSearches), label: ‘Total searches’, status: ‘Volume’, desc: ‘Search requests routed across all partners and suppliers in the period.’, action: null },
+    { key: ‘conv’, rag: convRag, value: NF.pct(s.bookingConv, 2), label: ‘Booking conversion’, desc: `Share of searches ending in a confirmed booking, against the ${s.bookingBenchmark}% platform benchmark.`, action: () => onFocus(‘partners’) },
+    { key: ‘risk’, rag: riskRag, value: NF.money(s.revenueAtRisk), label: ‘Estimated revenue at risk’, desc: ‘Monthly GMV we\’d likely recover if the competitive rates we failed to surface had been shown.’, calc: s.revenueAtRiskAssumption, action: () => onFocus(‘platform’) },
+    { key: ‘supplier’, rag: ‘red’, value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ‘ fail’, label: ‘Worst performing supplier’, desc: ‘Highest combined failure rate across availability, competitiveness, reliability and latency.’, action: () => onOpen({ type: ‘supplier’, name: s.topFailingSupplier.name }) },
+    { key: ‘partner’, rag: ‘amber’, value: s.topFailingPartner.name, big: false, valuePct: NF.money(s.topFailingPartner.revenue) + ‘ GMV’, label: ‘Worst performing partner’, desc: ‘Demand partner with the lowest booking conversion — the biggest missed-conversion gap.’, action: () => onOpen({ type: ‘partner’, name: s.topFailingPartner.name }) },
   ];
   return (
     <div className="cards-row">
@@ -39,7 +37,7 @@ function SummaryCards({ data, rag, onOpen, onFocus, active }) {
                   {c.delta != null && <span className="sum-card-delta" style={{ color: accent }}>{c.delta >= 0 ? '+' : ''}{c.delta.toFixed(2)}</span>}
                 </div>
               )}
-              <div className="sum-card-desc" title={c.tip || ''}>{c.desc}{c.tip && <span className="info-dot">i</span>}</div>
+              <div className="sum-card-desc">{c.desc}{c.calc && <><span className="info-dot" title={c.calc}>i</span> <span style={{fontSize:'10.5px',color:'var(--txt-3)',fontWeight:500}}>How calculated</span></>}</div>
             </div>
           </button>
         );
@@ -52,9 +50,10 @@ function SummaryCards({ data, rag, onOpen, onFocus, active }) {
 function SupplierPanel({ data, rag, onOpen }) {
   const [showInfo, setShowInfo] = React.useState(false);
   const dims = [
-    { name: 'Availability',    q: 'Share of searches where the supplier returned at least one valid rate',      code: 'F1 — No rate returned' },
-    { name: 'Competitiveness', q: 'Share of searches where the supplier\'s rate was the best price available',  code: 'F2 — Uncompetitive rate' },
-    { name: 'Reliability',     q: 'Share of events with no booking failure or high latency (F3 or F4)',         code: 'F3 — Booking failed · F4 — High latency' },
+    { name: 'Availability',    q: 'Share of searches where the supplier returned a valid rate' },
+    { name: 'Competitiveness', q: 'Share of searches where the supplier\'s rate was within 5% of the competitor\'s best rate' },
+    { name: 'Reliability',     q: 'Share of bookings with no failure' },
+    { name: 'Latency',         q: 'Share of searches that had a response time of 1.5s or less' },
   ];
   const failures = [
     { code: 'F1', name: 'No rate',        q: 'Supplier returned no rate for the searched hotel' },
@@ -77,15 +76,14 @@ function SupplierPanel({ data, rag, onOpen }) {
         </div>
       </div>
       <div className="panel-info-body" style={{ marginBottom: 16 }}>
-        <div className="panel-info-label">Three dimensions — weighted equally · health scored 0–100</div>
-        <div className="intro-pillars">
+        <div className="panel-info-label">Four dimensions — weighted equally · health scored 0–100</div>
+        <div className="intro-pillars" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
           {dims.map((p, i) => (
             <div className="intro-pillar" key={p.name}>
               <div className="intro-pillar-h">
                 <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
               </div>
               <div className="intro-pillar-q">{p.q}</div>
-              <div className="intro-pillar-code">{p.code}</div>
             </div>
           ))}
         </div>
@@ -116,6 +114,7 @@ function SupplierPanel({ data, rag, onOpen }) {
               <MetricPill label="available" value={sup.availability} color="var(--accent)" />
               <MetricPill label="competitive" value={sup.competitiveness} color="var(--accent-2)" />
               <MetricPill label="reliable" value={sup.reliability} color="var(--accent)" />
+              <MetricPill label="latency" value={sup.latency} color="var(--accent-2)" />
             </div>
             <HealthScore value={sup.health} rag={healthRag(sup.health)} />
           </button>
@@ -129,9 +128,9 @@ function SupplierPanel({ data, rag, onOpen }) {
 function PartnerPanel({ data, rag, onOpen }) {
   const partners = [...data.partners].sort((a, b) => b.revenue - a.revenue);
   const dims = [
-    { name: 'Engagement', q: 'Is the partner searching actively? Volume trend over the period — growing, flat, or dropping.',                                         code: 'Search volume · volume trend (↑ / flat / ↓)' },
-    { name: 'Conversion', q: 'Of searches where a rate was shown, how many became bookings? A low click→book rate signals rates aren\'t competitive for their users.', code: 'Booked ÷ shown · click→book rate' },
-    { name: 'Value',      q: 'Average booking value and margin contribution. High volume with thin margins is a different problem to low volume with strong margins.',  code: 'Avg booking value · GMV · margin share %' },
+    { name: 'Engagement', q: 'Number of searches performed' },
+    { name: 'Conversion', q: 'Rate of bookings per search' },
+    { name: 'Value',      q: 'Average booking value, Gross merchandise value and margin contribution' },
   ];
   return (
     <section className="panel">
@@ -151,7 +150,6 @@ function PartnerPanel({ data, rag, onOpen }) {
                 <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
               </div>
               <div className="intro-pillar-q">{p.q}</div>
-              <div className="intro-pillar-code">{p.code}</div>
             </div>
           ))}
         </div>
@@ -201,7 +199,7 @@ function PlatformHealth({ data, onOpen, expandedRef }) {
   const supplierColors = {};
   window.NUITEE_SUPPLIERS.forEach((s, i) => { supplierColors[s] = `hsl(${165 + i * 14} 55% ${56 - i * 1.5}%)`; });
   const f5segs = pf.f5byPartner.map(x => ({ label: x.partner, value: x.count, color: partnerColors[x.partner] }));
-  const f6segs = pf.f6bySupplier.map(x => ({ label: x.supplier, value: x.count, color: supplierColors[x.supplier] }));
+  const f6segs = pf.f6byPartner.map(x => ({ label: x.partner, value: x.count, color: partnerColors[x.partner] }));
   return (
     <section className="platform" ref={expandedRef}>
       <div className="panel-head">
@@ -252,7 +250,7 @@ function PlatformHealth({ data, onOpen, expandedRef }) {
           <div className="platform-mlabel">dead searches</div>
           <div className="platform-msub">No competitive option shown to any partner for the search <span className="fcode">F6</span></div>
           <div className="platform-bar">
-            <div className="platform-bar-head"><span>Top contributing suppliers</span><span>{NF.int(pf.f6count)} searches</span></div>
+            <div className="platform-bar-head"><span>Affected partners</span><span>{NF.int(pf.f6count)} searches</span></div>
             <StackedBar segments={f6segs} showLabels />
           </div>
           <button className="platform-expand" onClick={() => setOpen(open === 'f6' ? null : 'f6')}>
@@ -355,7 +353,8 @@ function MatrixTip({ p, s, c }) {
       <div className="mx-tip-rows">
         <div><span>Availability</span><b>{NF.pct(c.availability)}</b></div>
         <div><span>Competitiveness</span><b>{NF.pct(c.competitiveness)}</b></div>
-        <div><span>Reliability</span><b>{NF.pct(c.reliability, 2)}</b></div>
+        <div><span>Reliability</span><b>{NF.pct(c.reliability)}</b></div>
+        <div><span>Latency</span><b>{NF.pct(c.latency)}</b></div>
       </div>
       <div className="mx-tip-foot">{NF.int(c.searches)} searches · {c.booked} booked</div>
     </div>
