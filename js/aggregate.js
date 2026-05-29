@@ -24,7 +24,7 @@
     var sFilter = opts.suppliers && opts.suppliers.size ? opts.suppliers : null;
     var dFrom = opts.dayFrom || 1, dTo = opts.dayTo || 31;
 
-    function blank() { return { n: 0, f1: 0, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0, shown: 0, clicked: 0, booked: 0, bf: 0, bval: 0, margin: 0, lat: [], wk: [[0, 0], [0, 0], [0, 0], [0, 0]] }; }
+    function blank() { return { n: 0, f1: 0, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0, relfail: 0, shown: 0, clicked: 0, booked: 0, bf: 0, bval: 0, margin: 0, lat: [], wk: [[0, 0], [0, 0], [0, 0], [0, 0]] }; }
 
     var supA = {}, partA = {}, supHotel = {}, supPartner = {}, supWk = {};
     var cellA = {}; // p|s
@@ -38,6 +38,7 @@
     function bump(o, e) {
       o.n++; var m = e[MK];
       if (m & F1) o.f1++; if (m & F2) o.f2++; if (m & F3) o.f3++; if (m & F4) o.f4++; if (m & F5) o.f5++; if (m & F6) o.f6++;
+      if (m & (F3 | F4)) o.relfail++;
       if (e[SH]) o.shown++;
       var oc = e[O];
       if (oc === 2 || oc === 3 || oc === 4) o.clicked++;
@@ -68,7 +69,7 @@
     // ---- suppliers ----
     var suppliers = SUPPLIERS.map(function (s) {
       var o = supA[s]; if (!o.n) return null;
-      var av = 100 * (1 - o.f1 / o.n), co = 100 * (1 - o.f2 / o.n), re = 100 * (1 - o.f3 / o.n);
+      var av = 100 * (1 - o.f1 / o.n), co = 100 * (1 - o.f2 / o.n), re = 100 * (1 - o.relfail / o.n);
       var hotels = Object.keys(supHotel[s]).map(function (h) { return { hotel: h, fails: supHotel[s][h] }; }).sort(function (a, b) { return b.fails - a.fails; }).slice(0, 3);
       var parts = Object.keys(supPartner[s]).map(function (p) { var d = supPartner[s][p]; return { partner: p, failRate: r1(100 * d.fail / d.n), n: d.n }; }).sort(function (a, b) { return b.failRate - a.failRate; }).slice(0, 2);
       var weekly = supWk[s].map(function (w) { return w[0] ? { avail: r1(100 * (1 - w[1] / w[0])), compet: r1(100 * (1 - w[2] / w[0])), rel: r2(100 * (1 - w[3] / w[0])) } : null; });
@@ -95,7 +96,7 @@
 
     // ---- helper: cell health ----
     function cellObj(d) {
-      var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.f3 / d.n);
+      var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.relfail / d.n);
       var h = health(av, co, re);
       return {
         searches: d.n, availability: r1(av), competitiveness: r1(co), reliability: r2(re),
@@ -110,13 +111,13 @@
     var partners = PARTNERS.map(function (p) {
       var o = partA[p]; if (!o.n) return null;
       var conv = 100 * o.booked / Math.max(1, o.shown);
-      var pav = 100 * (1 - o.f1 / o.n), pco = 100 * (1 - o.f2 / o.n), pre = 100 * (1 - o.f3 / o.n);
+      var pav = 100 * (1 - o.f1 / o.n), pco = 100 * (1 - o.f2 / o.n), pre = 100 * (1 - o.relfail / o.n);
       var earlyVol = o.wk[0][0] + o.wk[1][0];
       var recentVol = o.wk[2][0] + o.wk[3][0];
       var eng = recentVol > earlyVol * 1.05 ? 'up' : recentVol < earlyVol * 0.95 ? 'down' : 'flat';
       var supHealths = SUPPLIERS.map(function (s) {
         var d = cellA[p + '|' + s]; if (!d.n) return null;
-        var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.f3 / d.n);
+        var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.relfail / d.n);
         return { supplier: s, health: health(av, co, re), n: d.n };
       }).filter(Boolean).sort(function (a, b) { return b.health - a.health; });
       return {

@@ -12,8 +12,8 @@ function SummaryCards({ data, rag, onOpen, onFocus, active }) {
     { key: 'searches', neutral: true, value: NF.int(s.totalSearches), label: 'Total searches', status: 'Volume', desc: 'Search requests routed across all partners and suppliers in the period.', action: null },
     { key: 'conv', rag: convRag, value: NF.pct(s.bookingConv, 2), label: 'Booking conversion', desc: `Share of searches ending in a confirmed booking, against the ${s.bookingBenchmark}% platform benchmark.`, delta: s.bookingConv - s.bookingBenchmark, action: () => onFocus('partners') },
     { key: 'risk', rag: riskRag, value: NF.money(s.revenueAtRisk), label: 'Estimated revenue at risk', desc: 'Monthly GMV we’d likely recover if the competitive rates we failed to surface (F3) had been shown.', tip: s.revenueAtRiskAssumption, action: () => onFocus('platform') },
-    { key: 'supplier', rag: 'red', value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ' fail', label: 'Top failing supplier', desc: 'Highest combined failure rate across availability, competitiveness and reliability.', action: () => onOpen({ type: 'supplier', name: s.topFailingSupplier.name }) },
-    { key: 'partner', rag: 'amber', value: s.topFailingPartner.name, big: false, valuePct: NF.pct(s.topFailingPartner.conv, 2) + ' conv', label: 'Top failing partner', desc: 'Demand partner with the lowest booking conversion — the biggest missed-conversion gap.', action: () => onOpen({ type: 'partner', name: s.topFailingPartner.name }) },
+    { key: 'supplier', rag: 'red', value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ' fail', label: 'Worst performing supplier', desc: 'Highest combined failure rate across availability, competitiveness and reliability.', action: () => onOpen({ type: 'supplier', name: s.topFailingSupplier.name }) },
+    { key: 'partner', rag: 'amber', value: s.topFailingPartner.name, big: false, valuePct: NF.pct(s.topFailingPartner.conv, 2) + ' conv', label: 'Worst performing partner', desc: 'Demand partner with the lowest booking conversion — the biggest missed-conversion gap.', action: () => onOpen({ type: 'partner', name: s.topFailingPartner.name }) },
     { key: 'dead', rag: deadRag, value: NF.pct(s.deadSearchRate, 2), label: 'Dead search rate', desc: 'Searches where no competitive option reached any partner at all (failure mode F6).', action: () => onFocus('platform') },
   ];
   return (
@@ -54,7 +54,7 @@ function SupplierPanel({ data, rag, onOpen }) {
   const dims = [
     { name: 'Availability',    q: 'Share of searches where the supplier returned at least one valid rate',      code: 'F1 — No rate returned' },
     { name: 'Competitiveness', q: 'Share of searches where the supplier\'s rate was the best price available',  code: 'F2 — Uncompetitive rate' },
-    { name: 'Reliability',     q: 'Share of bookings that completed successfully with acceptable speed',         code: 'F3 — Booking failed · F4 — High latency' },
+    { name: 'Reliability',     q: 'Share of events with no booking failure or high latency (F3 or F4)',         code: 'F3 — Booking failed · F4 — High latency' },
   ];
   const failures = [
     { code: 'F1', name: 'No rate',        q: 'Supplier returned no rate for the searched hotel' },
@@ -71,25 +71,27 @@ function SupplierPanel({ data, rag, onOpen }) {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className={'panel-info-btn' + (showInfo ? ' active' : '')} onClick={() => setShowInfo(!showInfo)}>
-            <span className="info-dot">i</span> How scored
+            <span className="info-dot">i</span> Failure codes
           </button>
           <span className="panel-tag">last 30 days</span>
         </div>
       </div>
-      {showInfo && (
-        <div className="panel-info-body">
-          <div className="panel-info-label">Three dimensions — weighted equally · health scored 0–100</div>
-          <div className="intro-pillars" style={{ marginBottom: 16 }}>
-            {dims.map((p, i) => (
-              <div className="intro-pillar" key={p.name}>
-                <div className="intro-pillar-h">
-                  <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
-                </div>
-                <div className="intro-pillar-q">{p.q}</div>
-                <div className="intro-pillar-code">{p.code}</div>
+      <div className="panel-info-body" style={{ marginBottom: 16 }}>
+        <div className="panel-info-label">Three dimensions — weighted equally · health scored 0–100</div>
+        <div className="intro-pillars">
+          {dims.map((p, i) => (
+            <div className="intro-pillar" key={p.name}>
+              <div className="intro-pillar-h">
+                <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
               </div>
-            ))}
-          </div>
+              <div className="intro-pillar-q">{p.q}</div>
+              <div className="intro-pillar-code">{p.code}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {showInfo && (
+        <div className="panel-info-body" style={{ marginBottom: 16 }}>
           <div className="panel-info-label">Failure codes — F1–F4 are supplier-side</div>
           <div className="intro-pillars" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
             {failures.map(f => (
@@ -113,7 +115,7 @@ function SupplierPanel({ data, rag, onOpen }) {
             <div className="sup-pills">
               <MetricPill label="available" value={sup.availability} color="var(--accent)" />
               <MetricPill label="competitive" value={sup.competitiveness} color="var(--accent-2)" />
-              <MetricPill label="reliable" value={sup.reliability} color="var(--accent)" dp={2} />
+              <MetricPill label="reliable" value={sup.reliability} color="var(--accent)" />
             </div>
             <HealthScore value={sup.health} rag={healthRag(sup.health)} />
           </button>
@@ -125,8 +127,7 @@ function SupplierPanel({ data, rag, onOpen }) {
 
 /* ============ SECTION 2 — Partner panel ============ */
 function PartnerPanel({ data, rag, onOpen }) {
-  const [showInfo, setShowInfo] = React.useState(false);
-  const partners = [...data.partners].sort((a, b) => a.conv - b.conv);
+  const partners = [...data.partners].sort((a, b) => b.revenue - a.revenue);
   const dims = [
     { name: 'Engagement', q: 'Is the partner searching actively? Volume trend over the period — growing, flat, or dropping.',                                         code: 'Search volume · volume trend (↑ / flat / ↓)' },
     { name: 'Conversion', q: 'Of searches where a rate was shown, how many became bookings? A low click→book rate signals rates aren\'t competitive for their users.', code: 'Booked ÷ shown · click→book rate' },
@@ -137,61 +138,50 @@ function PartnerPanel({ data, rag, onOpen }) {
       <div className="panel-head">
         <div>
           <h2 className="panel-title">Partner performance</h2>
-          <span className="panel-sub">{partners.length} partners · ranked worst → best</span>
+          <span className="panel-sub">{partners.length} partners · ranked by GMV</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className={'panel-info-btn' + (showInfo ? ' active' : '')} onClick={() => setShowInfo(!showInfo)}>
-            <span className="info-dot">i</span> How scored
-          </button>
-          <span className="panel-tag">conversion</span>
+        <span className="panel-tag">last 30 days</span>
+      </div>
+      <div className="panel-info-body" style={{ marginBottom: 16 }}>
+        <div className="panel-info-label">Three dimensions — engagement, conversion, value</div>
+        <div className="intro-pillars">
+          {dims.map((p, i) => (
+            <div className="intro-pillar" key={p.name}>
+              <div className="intro-pillar-h">
+                <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
+              </div>
+              <div className="intro-pillar-q">{p.q}</div>
+              <div className="intro-pillar-code">{p.code}</div>
+            </div>
+          ))}
         </div>
       </div>
-      {showInfo && (
-        <div className="panel-info-body">
-          <div className="panel-info-label">Three dimensions — engagement, conversion, value</div>
-          <div className="intro-pillars">
-            {dims.map((p, i) => (
-              <div className="intro-pillar" key={p.name}>
-                <div className="intro-pillar-h">
-                  <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
-                </div>
-                <div className="intro-pillar-q">{p.q}</div>
-                <div className="intro-pillar-code">{p.code}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
       <div className="rows">
-        {partners.map(p => {
-          const convRag = p.conv >= 2.5 ? 'green' : p.conv >= 1.6 ? 'amber' : 'red';
-          return (
-            <button key={p.name} className="row part-row" onClick={() => onOpen({ type: 'partner', name: p.name })}>
-              <div className="row-name">
-                <span className="row-name-txt">{p.name}</span>
+        {partners.map(p => (
+          <button key={p.name} className="row part-row" onClick={() => onOpen({ type: 'partner', name: p.name })}>
+            <div className="row-name">
+              <span className="row-name-txt">{p.name}</span>
+            </div>
+            <div className="part-metrics">
+              <div className="part-metric">
+                <span className="part-metric-val"><TrendArrow dir={p.engagement} size={12} /> {NF.int(p.searched)}</span>
+                <span className="part-metric-lbl">searches</span>
               </div>
-              <div className="part-metrics">
-                <div className="part-metric">
-                  <span className="part-metric-val">{NF.int(p.searched)}</span>
-                  <span className="part-metric-lbl">searches</span>
-                </div>
-                <div className="part-metric">
-                  <span className="part-metric-val">{NF.int(p.booked)}</span>
-                  <span className="part-metric-lbl">bookings</span>
-                </div>
-                <div className="part-metric">
-                  <span className="part-metric-val">{NF.money(p.revenue)}</span>
-                  <span className="part-metric-lbl">GMV</span>
-                </div>
+              <div className="part-metric">
+                <span className="part-metric-val">{NF.int(p.booked)}</span>
+                <span className="part-metric-lbl">bookings</span>
               </div>
-              <div className="part-funnel">
-                <TrendArrow dir={p.engagement} />
-                <span className="part-eng-lbl">{p.engagement === 'up' ? 'growing' : p.engagement === 'down' ? 'falling' : 'stable'}</span>
+              <div className="part-metric">
+                <span className="part-metric-val">{NF.money(p.revenue)}</span>
+                <span className="part-metric-lbl">GMV</span>
               </div>
-              <span className="part-conv" style={{ color: ragColor(convRag) }}>{NF.pct(p.conv, 2)}</span>
-            </button>
-          );
-        })}
+              <div className="part-metric">
+                <span className="part-metric-val">{NF.money(p.margin)}</span>
+                <span className="part-metric-lbl">margin</span>
+              </div>
+            </div>
+          </button>
+        ))}
       </div>
     </section>
   );

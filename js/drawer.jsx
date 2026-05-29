@@ -80,7 +80,7 @@ function SupplierDrawer({ data, rag, name }) {
         <div className="spark-grid">
           <SparkStat label="Availability" series={sup.weekly.map(w => w && w.avail)} last={sup.availability} color="var(--accent)" />
           <SparkStat label="Competitiveness" series={sup.weekly.map(w => w && w.compet)} last={sup.competitiveness} color="var(--accent-2)" />
-          <SparkStat label="Reliability" series={sup.weekly.map(w => w && w.rel)} last={sup.reliability} color="var(--accent)" dp={2} />
+          <SparkStat label="Reliability" series={sup.weekly.map(w => w && w.rel)} last={sup.reliability} color="var(--accent)" dp={0} />
         </div>
       </DSection>
       <div className="d-2col">
@@ -228,7 +228,7 @@ function CellDrawer({ data, rag, partner, supplier }) {
         <div className="metric-cards">
           <div className="metric-card"><span className="mc-lbl">Availability</span><span className="mc-val" style={{ color: 'var(--accent)' }}>{NF.pct(c.availability)}</span></div>
           <div className="metric-card"><span className="mc-lbl">Competitiveness</span><span className="mc-val" style={{ color: 'var(--accent-2)' }}>{NF.pct(c.competitiveness)}</span></div>
-          <div className="metric-card"><span className="mc-lbl">Reliability</span><span className="mc-val" style={{ color: 'var(--accent)' }}>{NF.pct(c.reliability, 2)}</span></div>
+          <div className="metric-card"><span className="mc-lbl">Reliability</span><span className="mc-val" style={{ color: 'var(--accent)' }}>{NF.pct(c.reliability)}</span></div>
         </div>
       </DSection>
       <div className={'cmp-callout ' + (diff >= 0 ? 'good' : 'bad')}>
