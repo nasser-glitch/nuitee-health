@@ -2,6 +2,8 @@
    Operates on packed events: [partnerIdx, supplierIdx, hotel, shown, outcome, bval, margin, lat, mask, day]
    outcome: 0 searched, 1 shown, 2 clicked, 3 booked, 4 book_failed
    mask bits: F1=1 F2=2 F3=4 F4=8 F5=16 F6=32
+     F1 No rate returned      F2 Uncompetitive rate    F3 Booking failed
+     F4 High latency          F5 Competitive not shown  F6 Dead search
    Health = 0.40*availability + 0.35*competitiveness + 0.25*reliability  (all as % success). */
 (function () {
   var P = 0, S = 1, H = 2, SH = 3, O = 4, BV = 5, MG = 6, LT = 7, MK = 8, DY = 9;
@@ -30,8 +32,8 @@
     PARTNERS.forEach(function (p) { partA[p] = blank(); });
     PARTNERS.forEach(function (p) { SUPPLIERS.forEach(function (s) { cellA[p + '|' + s] = blank(); }); });
 
-    var totF3 = 0, totF6 = 0, totN = 0, totBval = 0, totMargin = 0, totBooked = 0;
-    var f3byP = {}, f6byS = {}, f3combo = {}, f6combo = {};
+    var totF5 = 0, totF6 = 0, totN = 0, totBval = 0, totMargin = 0, totBooked = 0;
+    var f5byP = {}, f6byS = {}, f5combo = {}, f6combo = {};
 
     function bump(o, e) {
       o.n++; var m = e[MK];
@@ -51,12 +53,12 @@
       if (pFilter && !pFilter.has(pn)) continue;
       if (sFilter && !sFilter.has(sn)) continue;
       var d = e[DY]; if (d < dFrom || d > dTo) continue;
-      var m = e[MK], fail = (m & (F1 | F2 | F4)) ? 1 : 0;
+      var m = e[MK], fail = (m & (F1 | F2 | F3)) ? 1 : 0;  // availability + competitiveness + reliability
 
       bump(supA[sn], e); bump(partA[pn], e); bump(cellA[pn + '|' + sn], e);
       totN++; totBval += e[BV]; totMargin += e[MG];
       if (e[O] === 3) totBooked++;
-      if (m & F3) { totF3++; f3byP[pn] = (f3byP[pn] || 0) + 1; var k3 = pn + '|' + e[H]; f3combo[k3] = (f3combo[k3] || 0) + 1; }
+      if (m & F5) { totF5++; f5byP[pn] = (f5byP[pn] || 0) + 1; var k5 = pn + '|' + e[H]; f5combo[k5] = (f5combo[k5] || 0) + 1; }
       if (m & F6) { totF6++; f6byS[sn] = (f6byS[sn] || 0) + 1; var k6 = pn + '|' + sn; f6combo[k6] = (f6combo[k6] || 0) + 1; }
       if (fail) { supHotel[sn][e[H]] = (supHotel[sn][e[H]] || 0) + 1; }
       var sp = supPartner[sn][pn] || (supPartner[sn][pn] = { n: 0, fail: 0 });
@@ -66,7 +68,7 @@
     // ---- suppliers ----
     var suppliers = SUPPLIERS.map(function (s) {
       var o = supA[s]; if (!o.n) return null;
-      var av = 100 * (1 - o.f1 / o.n), co = 100 * (1 - o.f2 / o.n), re = 100 * (1 - o.f4 / o.n);
+      var av = 100 * (1 - o.f1 / o.n), co = 100 * (1 - o.f2 / o.n), re = 100 * (1 - o.f3 / o.n);
       var hotels = Object.keys(supHotel[s]).map(function (h) { return { hotel: h, fails: supHotel[s][h] }; }).sort(function (a, b) { return b.fails - a.fails; }).slice(0, 3);
       var parts = Object.keys(supPartner[s]).map(function (p) { var d = supPartner[s][p]; return { partner: p, failRate: r1(100 * d.fail / d.n), n: d.n }; }).sort(function (a, b) { return b.failRate - a.failRate; }).slice(0, 2);
       var weekly = supWk[s].map(function (w) { return w[0] ? { avail: r1(100 * (1 - w[1] / w[0])), compet: r1(100 * (1 - w[2] / w[0])), rel: r2(100 * (1 - w[3] / w[0])) } : null; });
@@ -74,7 +76,7 @@
         name: s, searches: o.n, availability: r1(av), competitiveness: r1(co), reliability: r2(re),
         health: health(av, co, re), p95: p95(o.lat),
         f1: o.f1, f2: o.f2, f3: o.f3, f4: o.f4, f5: o.f5, f6: o.f6,
-        donut: { f1: o.f1, f2: o.f2, f4: o.f4, f5: o.f5 },
+        donut: { f1: o.f1, f2: o.f2, f3: o.f3, f4: o.f4 },
         topHotels: hotels, topPartners: parts,
         weeklyHealth: o.wk.map(function (w) { return w[0] ? r1(100 * w[1] / w[0]) : 0; })
       };
@@ -93,7 +95,7 @@
 
     // ---- helper: cell health ----
     function cellObj(d) {
-      var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.f4 / d.n);
+      var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.f3 / d.n);
       var h = health(av, co, re);
       return {
         searches: d.n, availability: r1(av), competitiveness: r1(co), reliability: r2(re),
@@ -108,20 +110,20 @@
     var partners = PARTNERS.map(function (p) {
       var o = partA[p]; if (!o.n) return null;
       var conv = 100 * o.booked / o.n;
-      var pav = 100 * (1 - o.f1 / o.n), pco = 100 * (1 - o.f2 / o.n), pre = 100 * (1 - o.f4 / o.n);
+      var pav = 100 * (1 - o.f1 / o.n), pco = 100 * (1 - o.f2 / o.n), pre = 100 * (1 - o.f3 / o.n);
       var fh = (o.wk[0][1] + o.wk[1][1]) / Math.max(1, o.wk[0][0] + o.wk[1][0]);
       var sh = (o.wk[2][1] + o.wk[3][1]) / Math.max(1, o.wk[2][0] + o.wk[3][0]);
       var eng = sh > fh * 1.05 ? 'up' : sh < fh * 0.95 ? 'down' : 'flat';
       var supHealths = SUPPLIERS.map(function (s) {
         var d = cellA[p + '|' + s]; if (!d.n) return null;
-        var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.f4 / d.n);
+        var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.f3 / d.n);
         return { supplier: s, health: health(av, co, re), n: d.n };
       }).filter(Boolean).sort(function (a, b) { return b.health - a.health; });
       return {
         name: p, searched: o.n, shown: o.shown, clicked: o.clicked, booked: o.booked, bookFailed: o.bf,
         availability: r1(pav), competitiveness: r1(pco), reliability: r2(pre), health: health(pav, pco, pre),
         revenue: Math.round(o.bval), margin: Math.round(o.margin), marginShare: r1(100 * o.margin / totMarginAll),
-        f3: o.f3, f3rate: r1(100 * o.f3 / o.n),
+        f5: o.f5, f5rate: r1(100 * o.f5 / o.n),
         clickThrough: r1(100 * o.clicked / Math.max(1, o.shown)), showRate: r1(100 * o.shown / o.n),
         conv: r2(conv), engagement: eng,
         weeklyConv: o.wk.map(function (w) { return w[0] ? r2(100 * w[1] / w[0]) : 0; }),
@@ -140,42 +142,42 @@
     });
 
     // ---- platform ----
-    var f3byPartner = Object.keys(f3byP).map(function (p) { return { partner: p, count: f3byP[p], rate: r1(100 * f3byP[p] / partA[p].n) }; }).sort(function (a, b) { return b.count - a.count; });
+    var f5byPartner = Object.keys(f5byP).map(function (p) { return { partner: p, count: f5byP[p], rate: r1(100 * f5byP[p] / partA[p].n) }; }).sort(function (a, b) { return b.count - a.count; });
     var f6bySupplier = Object.keys(f6byS).map(function (s) { return { supplier: s, count: f6byS[s], rate: r2(100 * f6byS[s] / supA[s].n) }; }).sort(function (a, b) { return b.count - a.count; });
-    var f3affected = Object.keys(f3combo).map(function (k) { var x = k.split('|'); return { partner: x[0], hotel: x[1], count: f3combo[k] }; }).sort(function (a, b) { return b.count - a.count; }).slice(0, 25);
+    var f5affected = Object.keys(f5combo).map(function (k) { var x = k.split('|'); return { partner: x[0], hotel: x[1], count: f5combo[k] }; }).sort(function (a, b) { return b.count - a.count; }).slice(0, 25);
     var f6affected = Object.keys(f6combo).map(function (k) { var x = k.split('|'); return { partner: x[0], supplier: x[1], count: f6combo[k] }; }).sort(function (a, b) { return b.count - a.count; }).slice(0, 25);
 
     // ---- summary ----
     var overallConv = totBooked / Math.max(1, totN);
     var avgBval = totBooked ? totBval / totBooked : 0;
-    var f3notBooked = 0;
+    var f5notBooked = 0;
     for (var j = 0; j < events.length; j++) {
       var ev2 = events[j];
       if (pFilter && !pFilter.has(PARTNERS[ev2[P]])) continue;
       if (sFilter && !sFilter.has(SUPPLIERS[ev2[S]])) continue;
       if (ev2[DY] < dFrom || ev2[DY] > dTo) continue;
-      if ((ev2[MK] & F3) && ev2[O] !== 3) f3notBooked++;
+      if ((ev2[MK] & F5) && ev2[O] !== 3) f5notBooked++;
     }
     var worstSup = suppliers[0] || { name: '—', health: 100 };
     var worstPartner = partners[partners.length - 1] || { name: '—', conv: 0 };
     var summary = {
       totalSearches: totN,
       bookingConv: r2(100 * overallConv), bookingBenchmark: 2.50,
-      revenueAtRisk: Math.round(f3notBooked * overallConv * avgBval),
-      revenueAtRiskAssumption: 'F3 searches that didn’t book, recovered at platform baseline conversion (' + r2(100 * overallConv) + '%) × avg booking value ($' + Math.round(avgBval) + ')',
+      revenueAtRisk: Math.round(f5notBooked * overallConv * avgBval),
+      revenueAtRiskAssumption: 'F5 searches that didn\'t book, recovered at platform baseline conversion (' + r2(100 * overallConv) + '%) × avg booking value ($' + Math.round(avgBval) + ')',
       topFailingSupplier: { name: worstSup.name, failRate: r1(100 - worstSup.health), health: worstSup.health },
       topFailingPartner: { name: worstPartner.name, conv: worstPartner.conv },
       deadSearchRate: r2(100 * totF6 / Math.max(1, totN)),
-      f3rate: r1(100 * totF3 / Math.max(1, totN)),
+      f5rate: r1(100 * totF5 / Math.max(1, totN)),
       gmv: Math.round(totBval), margin: Math.round(totMargin), bookings: totBooked
     };
 
     return {
       summary: summary, suppliers: suppliers, partners: partners, matrix: matrix,
       platform: {
-        f3rate: r1(100 * totF3 / Math.max(1, totN)), f3count: totF3, f3byPartner: f3byPartner,
+        f5rate: r1(100 * totF5 / Math.max(1, totN)), f5count: totF5, f5byPartner: f5byPartner,
         f6rate: r2(100 * totF6 / Math.max(1, totN)), f6count: totF6, f6bySupplier: f6bySupplier,
-        f3affected: f3affected, f6affected: f6affected
+        f5affected: f5affected, f6affected: f6affected
       }
     };
   };

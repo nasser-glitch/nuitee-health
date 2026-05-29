@@ -6,7 +6,7 @@ function IntroBanner({ g, a }) {
   const pillars = [
     { name: 'Availability', w: 40, q: 'Did the supplier return a rate at all?', code: 'F1' },
     { name: 'Competitiveness', w: 35, q: 'Was the rate the best price available?', code: 'F2' },
-    { name: 'Reliability', w: 25, q: 'Did the booking actually complete?', code: 'F4' },
+    { name: 'Reliability', w: 25, q: 'Did the booking actually complete?', code: 'F3' },
   ];
   return (
     <section className="intro">
@@ -17,7 +17,7 @@ function IntroBanner({ g, a }) {
           and lane <b>0–100</b> on three pillars — weighted <b>40 / 35 / 25</b>. The combined failure rate
           is <b>100 − health</b>: <span className="rag-word green">healthy under {g}%</span>,
           <span className="rag-word amber"> watch {g}–{a}%</span>, <span className="rag-word red"> critical above {a}%</span>.
-          <b> F3</b> (competitive rate not surfaced) and <b>F6</b> (no option shown) are Nuitee-controlled and tracked separately.
+          <b> F5</b> (competitive rate not surfaced) and <b>F6</b> (no option shown) are Nuitee-controlled and tracked separately.
         </p>
       </div>
       <div className="intro-pillars">
@@ -160,7 +160,7 @@ function PlatformHealth({ data, onOpen, expandedRef }) {
   window.NUITEE_PARTNERS.forEach((p, i) => { partnerColors[p] = `hsl(${210 + i * 26} 70% ${58 - i * 2}%)`; });
   const supplierColors = {};
   window.NUITEE_SUPPLIERS.forEach((s, i) => { supplierColors[s] = `hsl(${165 + i * 14} 55% ${56 - i * 1.5}%)`; });
-  const f3segs = pf.f3byPartner.map(x => ({ label: x.partner, value: x.count, color: partnerColors[x.partner] }));
+  const f5segs = pf.f5byPartner.map(x => ({ label: x.partner, value: x.count, color: partnerColors[x.partner] }));
   const f6segs = pf.f6bySupplier.map(x => ({ label: x.supplier, value: x.count, color: supplierColors[x.supplier] }));
   return (
     <section className="platform" ref={expandedRef}>
@@ -173,21 +173,21 @@ function PlatformHealth({ data, onOpen, expandedRef }) {
         </div>
       </div>
       <div className="platform-grid">
-        <div className={'platform-metric' + (open === 'f3' ? ' open' : '')}>
-          <div className="platform-big">{NF.pct(pf.f3rate)}</div>
+        <div className={'platform-metric' + (open === 'f5' ? ' open' : '')}>
+          <div className="platform-big">{NF.pct(pf.f5rate)}</div>
           <div className="platform-mlabel">of competitive rates not surfaced</div>
-          <div className="platform-msub">Supplier returned a competitive rate that was never shown to a partner <span className="fcode">F3</span></div>
+          <div className="platform-msub">Supplier returned a competitive rate that was never shown to a partner <span className="fcode">F5</span></div>
           <div className="platform-bar">
-            <div className="platform-bar-head"><span>Most affected partners</span><span>{NF.int(pf.f3count)} searches</span></div>
-            <StackedBar segments={f3segs} showLabels />
+            <div className="platform-bar-head"><span>Most affected partners</span><span>{NF.int(pf.f5count)} searches</span></div>
+            <StackedBar segments={f5segs} showLabels />
           </div>
-          <button className="platform-expand" onClick={() => setOpen(open === 'f3' ? null : 'f3')}>
-            {open === 'f3' ? '− Hide' : '+ Show'} affected partner × hotel
+          <button className="platform-expand" onClick={() => setOpen(open === 'f5' ? null : 'f5')}>
+            {open === 'f5' ? '− Hide' : '+ Show'} affected partner × hotel
           </button>
-          {open === 'f3' && (
+          {open === 'f5' && (
             <table className="mini-table">
-              <thead><tr><th>Partner</th><th>Hotel ID</th><th>F3 count</th></tr></thead>
-              <tbody>{pf.f3affected.map((r, i) => <tr key={i}><td>{r.partner}</td><td className="mono">#{r.hotel}</td><td className="num">{r.count}</td></tr>)}</tbody>
+              <thead><tr><th>Partner</th><th>Hotel ID</th><th>F5 count</th></tr></thead>
+              <tbody>{pf.f5affected.map((r, i) => <tr key={i}><td>{r.partner}</td><td className="mono">#{r.hotel}</td><td className="num">{r.count}</td></tr>)}</tbody>
             </table>
           )}
         </div>

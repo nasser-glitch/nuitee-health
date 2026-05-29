@@ -283,6 +283,12 @@ html[data-density="compact"] .platform-big{ font-size:36px; }
 
 @media (max-width:1180px){ .cards-row{ grid-template-columns:repeat(2,1fr); } .intro{ grid-template-columns:1fr; gap:20px; } .dual{ grid-template-columns:1fr; } .platform-grid{ grid-template-columns:1fr; } .platform-metric:first-child{ border-right:none; padding-right:0; border-bottom:1px solid #2c3a50; padding-bottom:22px; } .legend-fixed{ display:none; } }
 @media (max-width:680px){ .cards-row{ grid-template-columns:1fr; } .intro-pillars{ grid-template-columns:1fr; } }
+
+/* ---------- upload zone ---------- */
+.upload-zone{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; max-width:480px;
+  padding:52px 40px; border-radius:var(--r-card); border:2px dashed var(--border); background:var(--surface);
+  cursor:pointer; transition:border-color .15s, background .15s; text-align:center; }
+.upload-zone:hover,.upload-zone.drag{ border-color:var(--accent); background:color-mix(in srgb,var(--accent) 6%,var(--surface)); }
 </style>
 </head>
 <body>
@@ -292,7 +298,7 @@ html[data-density="compact"] .platform-big{ font-size:36px; }
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-<script src="js/events.js"></script>
+<script src="js/parse.js"></script>
 <script src="js/aggregate.js"></script>
 <script type="text/babel" src="tweaks-panel.jsx"></script>
 <script type="text/babel" src="js/charts.jsx"></script>

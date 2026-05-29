@@ -39,15 +39,15 @@ function SupplierDrawer({ data, rag, name }) {
   const donut = [
     { value: sup.donut.f2, color: 'var(--accent-2)', label: 'Uncompetitive (F2)' },
     { value: sup.donut.f1, color: 'var(--accent)', label: 'No rate (F1)' },
-    { value: sup.donut.f5, color: 'var(--rag-amber)', label: 'High latency (F5)' },
-    { value: sup.donut.f4, color: 'var(--rag-red)', label: 'Booking failed (F4)' },
+    { value: sup.donut.f4, color: 'var(--rag-amber)', label: 'High latency (F4)' },
+    { value: sup.donut.f3, color: 'var(--rag-red)', label: 'Booking failed (F3)' },
   ];
-  const f1r = 100 * sup.f1 / sup.searches, f2r = 100 * sup.f2 / sup.searches, f4r = 100 * sup.f4 / sup.searches, f5r = 100 * sup.f5 / sup.searches;
+  const f1r = 100 * sup.f1 / sup.searches, f2r = 100 * sup.f2 / sup.searches, f3r = 100 * sup.f3 / sup.searches, f4r = 100 * sup.f4 / sup.searches;
   const hyp = [];
   if (f1r > 12) hyp.push(`Returns no rate for ${f1r.toFixed(0)}% of searches — likely thin or missing inventory for the hotel types routed here.`);
   if (f2r > 50) hyp.push(`Rate is uncompetitive on ${f2r.toFixed(0)}% of searches — markup or contracted rates may be running above market.`);
-  if (f5r > 8) hyp.push(`High latency on ${f5r.toFixed(0)}% of searches (p95 ${NF.int(sup.p95)}ms) — slow responses risk timing out before results render.`);
-  if (f4r > 0.3) hyp.push(`Booking fails on ${f4r.toFixed(2)}% of attempts — confirm rate-recheck and inventory-lock behaviour.`);
+  if (f4r > 8) hyp.push(`High latency on ${f4r.toFixed(0)}% of searches (p95 ${NF.int(sup.p95)}ms) — slow responses risk timing out before results render.`);
+  if (f3r > 0.3) hyp.push(`Booking fails on ${f3r.toFixed(2)}% of attempts — confirm rate-recheck and inventory-lock behaviour.`);
   if (!hyp.length) hyp.push('Performing within healthy bounds across availability, competitiveness and reliability.');
   return (
     <div className="d-body">
@@ -114,7 +114,7 @@ function PartnerDrawer({ data, rag, name }) {
   const leak = [];
   if (notShown > 70) leak.push(`${notShown.toFixed(0)}% of searches never surface a result — supplier availability or surfacing logic is the dominant leak.`);
   if (notClicked > 50) leak.push(`${notClicked.toFixed(0)}% of shown results are never clicked — possible pricing or relevance issue at the point of display.`);
-  if (p.f3rate > 40) leak.push(`On ${p.f3rate.toFixed(0)}% of their searches a competitive rate existed but wasn't surfaced (F3) — recoverable demand.`);
+  if (p.f5rate > 40) leak.push(`On ${p.f5rate.toFixed(0)}% of their searches a competitive rate existed but wasn't surfaced (F5) — recoverable demand.`);
   if (!leak.length) leak.push('Funnel is converting in line with platform norms at each stage.');
   const convRag = p.conv >= 2.5 ? 'green' : p.conv >= 1.6 ? 'amber' : 'red';
   return (
@@ -141,7 +141,7 @@ function PartnerDrawer({ data, rag, name }) {
       </DSection>
       <div className="d-2col">
         <DSection title="Revenue"><div className="d-statpair"><div><span>GMV</span><b>{NF.money0(p.revenue)}</b></div><div><span>Margin</span><b>{NF.money0(p.margin)}</b></div></div></DSection>
-        <DSection title="Unsurfaced rates"><div className="d-statpair"><div><span>F3 rate</span><b style={{ color: ragColor(rag(p.f3rate)) }}>{NF.pct(p.f3rate)}</b></div><div><span>Margin share</span><b>{NF.pct(p.marginShare)}</b></div></div></DSection>
+        <DSection title="Unsurfaced rates"><div className="d-statpair"><div><span>F5 rate</span><b style={{ color: ragColor(rag(p.f5rate)) }}>{NF.pct(p.f5rate)}</b></div><div><span>Margin share</span><b>{NF.pct(p.marginShare)}</b></div></div></DSection>
       </div>
       <DSection title="Where they leak most">
         <Hyp items={leak} />
@@ -166,16 +166,19 @@ function CellDrawer({ data, rag, partner, supplier }) {
   const fr = c.failRate;
   const supAvg = sup ? sup.health : c.health;
   const diff = c.health - supAvg;
-  const f1r = 100 * c.f1 / c.searches, f2r = 100 * c.f2 / c.searches, f3r = 100 * c.f3 / c.searches;
+  const f1r = 100 * c.f1 / c.searches, f2r = 100 * c.f2 / c.searches, f5r = 100 * c.f5 / c.searches;
   const hyp = [];
   if (f1r > 12) hyp.push(`${supplier} returns no rate for ${f1r.toFixed(0)}% of ${partner}'s searches — likely missing inventory for the hotel types this partner requests.`);
   if (f2r > 50) hyp.push(`Rate is uncompetitive on ${f2r.toFixed(0)}% of this lane — ${partner}'s buyers see cheaper options elsewhere.`);
-  if (f3r > 40) hyp.push(`A competitive rate existed but wasn't surfaced on ${f3r.toFixed(0)}% of searches (F3) — Nuitee-side recoverable.`);
+  if (f5r > 40) hyp.push(`A competitive rate existed but wasn't surfaced on ${f5r.toFixed(0)}% of searches (F5) — Nuitee-side recoverable.`);
   if (!hyp.length) hyp.push('This lane is healthy relative to the platform.');
   const bars = [
-    { label: 'F1', value: c.f1, color: 'var(--accent)' }, { label: 'F2', value: c.f2, color: 'var(--accent-2)' },
-    { label: 'F3', value: c.f3, color: 'var(--txt-3)' }, { label: 'F4', value: c.f4, color: 'var(--rag-red)' },
-    { label: 'F5', value: c.f5, color: 'var(--rag-amber)' }, { label: 'F6', value: c.f6, color: 'var(--rag-red)' },
+    { label: 'F1', value: c.f1, color: 'var(--accent)' },    // No rate returned
+    { label: 'F2', value: c.f2, color: 'var(--accent-2)' },  // Uncompetitive rate
+    { label: 'F3', value: c.f3, color: 'var(--rag-red)' },   // Booking failed
+    { label: 'F4', value: c.f4, color: 'var(--rag-amber)' }, // High latency
+    { label: 'F5', value: c.f5, color: 'var(--txt-3)' },     // Competitive not shown
+    { label: 'F6', value: c.f6, color: 'var(--rag-red)' },   // Dead search
   ];
   const stages = [{ label: 'Searched', value: c.searches }, { label: 'Shown', value: c.shown }, { label: 'Clicked', value: c.clicked }, { label: 'Booked', value: c.booked }];
   return (

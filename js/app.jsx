@@ -1,4 +1,4 @@
-/* App shell: header, filter bar, sections, drawer, legend, tweaks. */
+/* App shell: upload screen, header, filter bar, sections, drawer, legend, tweaks. */
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "blue",
@@ -59,10 +59,68 @@ function MultiSelect({ label, options, selected, onChange }) {
   );
 }
 
+/* ---- Upload screen ---- */
+function UploadScreen({ onData }) {
+  const [dragging, setDragging] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const inputRef = React.useRef(null);
+
+  const REQUIRED_COLS = ['search_id','timestamp','demand_partner','supplier','hotel_id',
+    'rate_returned','competitor_best_rate','shown_to_partner','outcome','booking_value','margin','latency_ms'];
+
+  function processFile(file) {
+    if (!file || !file.name.endsWith('.csv')) { setError('Please upload a .csv file.'); return; }
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const result = window.parseNuiteeCSV(e.target.result);
+        onData(result);
+      } catch (err) {
+        setError(err.message || 'Failed to parse CSV.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', gap: 32 }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--txt-1)', marginBottom: 8 }}>
+          <span style={{ color: 'var(--accent)' }}>nuitee</span> · Health Dashboard
+        </div>
+        <p style={{ fontSize: 14.5, color: 'var(--txt-2)', margin: 0 }}>Upload your events CSV to generate the health report</p>
+      </div>
+
+      <div
+        className={dragging ? 'upload-zone drag' : 'upload-zone'}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => { e.preventDefault(); setDragging(false); processFile(e.dataTransfer.files[0]); }}
+        onClick={() => inputRef.current && inputRef.current.click()}
+      >
+        <div style={{ fontSize: 32, marginBottom: 14 }}>↑</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--txt-1)', marginBottom: 6 }}>Drop CSV here or click to browse</div>
+        <div style={{ fontSize: 12.5, color: 'var(--txt-2)' }}>Failure flags are computed from your raw data</div>
+        <input ref={inputRef} type="file" accept=".csv" style={{ display: 'none' }}
+          onChange={e => processFile(e.target.files[0])} />
+      </div>
+
+      {error && <div style={{ color: 'var(--rag-red)', fontSize: 13, fontWeight: 500, background: 'color-mix(in srgb,var(--rag-red) 10%,transparent)', border: '1px solid color-mix(in srgb,var(--rag-red) 30%,transparent)', borderRadius: 9, padding: '10px 16px', maxWidth: 500, textAlign: 'center' }}>{error}</div>}
+
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 22px', maxWidth: 520 }}>
+        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--txt-3)', fontWeight: 600, marginBottom: 10 }}>Required columns</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {REQUIRED_COLS.map(c => <span key={c} style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: 11, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 5, padding: '2px 7px', color: 'var(--txt-2)' }}>{c}</span>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const EVENTS = window.NUITEE_EVENTS;
-  const PARTNERS = window.NUITEE_PARTNERS, SUPPLIERS = window.NUITEE_SUPPLIERS;
+  const [csvMeta, setCsvMeta] = React.useState(null); // null = no data loaded
   const [selP, setSelP] = React.useState(new Set());
   const [selS, setSelS] = React.useState(new Set());
   const [rangeDays, setRangeDays] = React.useState(30);
@@ -78,12 +136,28 @@ function App() {
     document.documentElement.dataset.density = t.density;
   }, [t.accent, t.density]);
 
-  const dayFrom = 31 - rangeDays, dayTo = 31;
+  if (!csvMeta) {
+    return (
+      <>
+        <UploadScreen onData={meta => { setCsvMeta(meta); setSelP(new Set()); setSelS(new Set()); }} />
+        <TweaksPanel>
+          <TweakSection label="Appearance" />
+          <TweakRadio label="Accent" value={t.accent} options={['blue', 'teal']} onChange={v => setTweak('accent', v)} />
+          <TweakRadio label="Density" value={t.density} options={['comfortable', 'compact']} onChange={v => setTweak('density', v)} />
+        </TweaksPanel>
+      </>
+    );
+  }
+
+  const EVENTS = window.NUITEE_EVENTS;
+  const PARTNERS = window.NUITEE_PARTNERS, SUPPLIERS = window.NUITEE_SUPPLIERS;
+  const dateLabel = window.NUITEE_DATE_LABEL || '';
+
+  const maxDay = EVENTS.reduce((m, e) => Math.max(m, e[9]), 1);
+  const dayFrom = Math.max(1, maxDay - rangeDays + 1), dayTo = maxDay;
   const filterOpts = React.useMemo(() => ({ partners: selP, suppliers: selS, dayFrom, dayTo }), [selP, selS, dayFrom, dayTo]);
   const data = React.useMemo(() => window.aggregate(EVENTS, filterOpts), [filterOpts]);
   const rag = React.useCallback(fr => window.ragOf(fr, t.ragGreen, t.ragAmber), [t.ragGreen, t.ragAmber]);
-
-  const dateLabel = rangeDays === 30 ? 'Apr 1 – 30, 2026' : rangeDays === 14 ? 'Apr 17 – 30, 2026' : 'Apr 24 – 30, 2026';
 
   const focus = id => {
     const el = id === 'platform' ? platRef.current : partRef.current;
@@ -100,7 +174,7 @@ function App() {
     const csv = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `nuitee-health_${dateLabel.replace(/[ ,]/g, '')}.csv`; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = `nuitee-health_${dateLabel.replace(/[ ,–]/g, '')}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -120,6 +194,10 @@ function App() {
           <MultiSelect label="Partners" options={PARTNERS} selected={selP} onChange={setSelP} />
           <MultiSelect label="Suppliers" options={SUPPLIERS} selected={selS} onChange={setSelS} />
           <button className="export-btn" onClick={exportCSV}><span className="export-ic">↧</span> Export CSV</button>
+          <button className="export-btn" style={{ background: 'var(--surface)', color: 'var(--txt-2)', border: '1px solid var(--border)' }}
+            onClick={() => { setCsvMeta(null); setDrawer(null); }}>
+            ↩ New file
+          </button>
         </div>
       </header>
 
