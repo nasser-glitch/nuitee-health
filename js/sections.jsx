@@ -4,15 +4,15 @@
 /* ============ SECTION 1 — Summary cards ============ */
 function SummaryCards({ data, rag, onOpen, onFocus, active }) {
   const s = data.summary;
-  const convRag = s.bookingConv >= s.bookingBenchmark ? ‘green’ : s.bookingConv >= s.bookingBenchmark * 0.9 ? ‘amber’ : ‘red’;
-  const riskRag = s.revenueAtRisk > 100000 ? ‘red’ : s.revenueAtRisk > 40000 ? ‘amber’ : ‘green’;
-  const statusTxt = { green: ‘Healthy’, amber: ‘Watch’, red: ‘Critical’ };
+  const convRag = s.bookingConv >= s.bookingBenchmark ? 'green' : s.bookingConv >= s.bookingBenchmark * 0.9 ? 'amber' : 'red';
+  const riskRag = s.revenueAtRisk > 100000 ? 'red' : s.revenueAtRisk > 40000 ? 'amber' : 'green';
+  const statusTxt = { green: 'Healthy', amber: 'Watch', red: 'Critical' };
   const cards = [
-    { key: ‘searches’, neutral: true, value: NF.int(s.totalSearches), label: ‘Total searches’, status: ‘Volume’, desc: ‘Search requests routed across all partners and suppliers in the period.’, action: null },
-    { key: ‘conv’, rag: convRag, value: NF.pct(s.bookingConv, 2), label: ‘Booking conversion’, desc: `Share of searches ending in a confirmed booking, against the ${s.bookingBenchmark}% platform benchmark.`, action: () => onFocus(‘partners’) },
-    { key: ‘risk’, rag: riskRag, value: NF.money(s.revenueAtRisk), label: ‘Estimated revenue at risk’, desc: ‘Monthly GMV we\’d likely recover if the competitive rates we failed to surface had been shown.’, calc: s.revenueAtRiskAssumption, action: () => onFocus(‘platform’) },
-    { key: ‘supplier’, rag: ‘red’, value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ‘ fail’, label: ‘Worst performing supplier’, desc: ‘Highest combined failure rate across availability, competitiveness, reliability and latency.’, action: () => onOpen({ type: ‘supplier’, name: s.topFailingSupplier.name }) },
-    { key: ‘partner’, rag: ‘amber’, value: s.topFailingPartner.name, big: false, valuePct: NF.money(s.topFailingPartner.revenue) + ‘ GMV’, label: ‘Worst performing partner’, desc: ‘Demand partner with the lowest booking conversion — the biggest missed-conversion gap.’, action: () => onOpen({ type: ‘partner’, name: s.topFailingPartner.name }) },
+    { key: 'searches', neutral: true, value: NF.int(s.totalSearches), label: 'Total searches', status: 'Volume', desc: 'Search requests routed across all partners and suppliers in the period.', action: null },
+    { key: 'conv', rag: convRag, value: NF.pct(s.bookingConv, 2), label: 'Booking conversion', desc: `Share of searches ending in a confirmed booking, against the ${s.bookingBenchmark}% platform benchmark.`, action: () => onFocus('partners') },
+    { key: 'risk', rag: riskRag, value: NF.money(s.revenueAtRisk), label: 'Estimated revenue at risk', desc: 'Monthly GMV we\'d likely recover if the competitive rates we failed to surface had been shown.', calc: s.revenueAtRiskAssumption, action: () => onFocus('platform') },
+    { key: 'supplier', rag: 'red', value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ' fail', label: 'Worst performing supplier', desc: 'Highest combined failure rate across availability, competitiveness, reliability and latency.', action: () => onOpen({ type: 'supplier', name: s.topFailingSupplier.name }) },
+    { key: 'partner', rag: 'amber', value: s.topFailingPartner.name, big: false, valuePct: NF.money(s.topFailingPartner.revenue) + ' GMV', label: 'Worst performing partner', desc: 'Demand partner with the lowest booking conversion — the biggest missed-conversion gap.', action: () => onOpen({ type: 'partner', name: s.topFailingPartner.name }) },
   ];
   return (
     <div className="cards-row">
@@ -353,8 +353,7 @@ function MatrixTip({ p, s, c }) {
       <div className="mx-tip-rows">
         <div><span>Availability</span><b>{NF.pct(c.availability)}</b></div>
         <div><span>Competitiveness</span><b>{NF.pct(c.competitiveness)}</b></div>
-        <div><span>Reliability</span><b>{NF.pct(c.reliability)}</b></div>
-        <div><span>Latency</span><b>{NF.pct(c.latency)}</b></div>
+        <div><span>Reliability</span><b>{NF.pct(c.reliability, 2)}</b></div>
       </div>
       <div className="mx-tip-foot">{NF.int(c.searches)} searches · {c.booked} booked</div>
     </div>
