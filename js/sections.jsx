@@ -28,11 +28,10 @@ function IntroBanner() {
       <div className="intro-group">
         <div className="intro-group-label">Supplier performance — health scored 0–100, three dimensions weighted equally</div>
         <div className="intro-pillars">
-          {supplierDims.map(p => (
+          {supplierDims.map((p, i) => (
             <div className="intro-pillar" key={p.name}>
               <div className="intro-pillar-h">
-                <span className="intro-pillar-name">{p.name}</span>
-                <span className="intro-pillar-w">⅓</span>
+                <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
               </div>
               <div className="intro-pillar-q">{p.q}</div>
               <div className="intro-pillar-code">{p.code}</div>
@@ -44,10 +43,10 @@ function IntroBanner() {
       <div className="intro-group">
         <div className="intro-group-label">Partner performance — primary signal: booking conversion vs 2.5% platform benchmark</div>
         <div className="intro-pillars">
-          {partnerDims.map(p => (
+          {partnerDims.map((p, i) => (
             <div className="intro-pillar" key={p.name}>
               <div className="intro-pillar-h">
-                <span className="intro-pillar-name">{p.name}</span>
+                <span className="intro-pillar-name"><span className="intro-num">{i+1}</span>{p.name}</span>
               </div>
               <div className="intro-pillar-q">{p.q}</div>
               <div className="intro-pillar-code">{p.code}</div>
@@ -62,8 +61,8 @@ function IntroBanner() {
           {failures.map(f => (
             <div className="intro-pillar" key={f.code}>
               <div className="intro-pillar-h">
-                <span className="intro-pillar-name"><span className="fcode">{f.code}</span> {f.name}</span>
-                <span className="intro-pillar-party" style={{ color: f.pc }}>{f.party}</span>
+                <span className="intro-pillar-name"><span className="intro-fcode">{f.code}</span> {f.name}</span>
+                <span className="intro-pillar-party">{f.party}</span>
               </div>
               <div className="intro-pillar-q">{f.q}</div>
             </div>
