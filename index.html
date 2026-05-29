@@ -72,20 +72,15 @@ button{ font-family:inherit; cursor:pointer; border:none; background:none; color
 html[data-density="compact"] .content{ gap:14px; padding:18px 22px; }
 
 /* ---------- intro / framework banner ---------- */
-.intro{ display:grid; grid-template-columns:1.35fr 1.65fr; gap:28px; align-items:center; background:var(--surface);
-  border:1px solid var(--border); border-radius:var(--r-card); padding:26px 30px; }
-.intro-title{ font-size:18px; font-weight:600; margin:0 0 10px; letter-spacing:-.01em; }
-.intro-text{ font-size:14.5px; line-height:1.62; color:var(--txt-2); margin:0; max-width:60ch; text-wrap:pretty; }
-.intro-text b{ color:var(--txt-1); font-weight:600; }
-.rag-word{ font-weight:600; }
-.rag-word.green{ color:var(--rag-green); } .rag-word.amber{ color:var(--rag-amber); } .rag-word.red{ color:var(--rag-red); }
-.intro-pillars{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-.intro-pillar{ background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:15px 16px; }
-.intro-pillar-h{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
-.intro-pillar-name{ font-size:13.5px; font-weight:600; }
-.intro-pillar-w{ font-size:15px; font-weight:700; color:var(--accent); }
-.intro-pillar-q{ font-size:12.5px; color:var(--txt-2); margin-top:8px; line-height:1.45; }
-.intro-pillar-code{ font-size:10.5px; color:var(--txt-3); margin-top:9px; font-family:'JetBrains Mono',monospace; }
+.intro{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); padding:26px 30px; }
+.intro-title{ font-size:18px; font-weight:600; margin:0 0 20px; letter-spacing:-.01em; }
+.intro-block{ margin-bottom:22px; }
+.intro-block:last-child{ margin-bottom:0; }
+.intro-block-label{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--txt-3); margin-bottom:10px; }
+.intro-table{ width:100%; border-collapse:collapse; font-size:13px; }
+.intro-table th{ text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--txt-3); font-weight:600; padding:7px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.intro-table td{ padding:8px 10px; border-bottom:1px solid var(--border-soft); color:var(--txt-1); line-height:1.45; vertical-align:top; }
+.intro-table td:first-child{ white-space:nowrap; }
 
 /* ---------- section 1 cards ---------- */
 .cards-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap); }
@@ -281,8 +276,8 @@ html[data-density="compact"] .platform-big{ font-size:36px; }
 .legend-fixed-row{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--txt-2); }
 .legend-fixed-row .legend-swatch{ width:10px; height:10px; }
 
-@media (max-width:1180px){ .cards-row{ grid-template-columns:repeat(2,1fr); } .intro{ grid-template-columns:1fr; gap:20px; } .dual{ grid-template-columns:1fr; } .platform-grid{ grid-template-columns:1fr; } .platform-metric:first-child{ border-right:none; padding-right:0; border-bottom:1px solid #2c3a50; padding-bottom:22px; } .legend-fixed{ display:none; } }
-@media (max-width:680px){ .cards-row{ grid-template-columns:1fr; } .intro-pillars{ grid-template-columns:1fr; } }
+@media (max-width:1180px){ .cards-row{ grid-template-columns:repeat(2,1fr); } .dual{ grid-template-columns:1fr; } .platform-grid{ grid-template-columns:1fr; } .platform-metric:first-child{ border-right:none; padding-right:0; border-bottom:1px solid #2c3a50; padding-bottom:22px; } .legend-fixed{ display:none; } }
+@media (max-width:680px){ .cards-row{ grid-template-columns:1fr; } }
 
 /* ---------- upload zone ---------- */
 .upload-zone{ display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; max-width:480px;

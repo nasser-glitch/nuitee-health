@@ -202,7 +202,7 @@ function App() {
       </header>
 
       <main className="content">
-        <IntroBanner g={t.ragGreen} a={t.ragAmber} />
+        <IntroBanner />
         <SummaryCards data={data} rag={rag} onOpen={openDrawer} onFocus={focus} active={activeCard} />
         <div className="dual" ref={partRef}>
           <SupplierPanel data={data} rag={rag} onOpen={openDrawer} />

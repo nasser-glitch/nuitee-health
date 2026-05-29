@@ -2,32 +2,102 @@
    `onOpen(payload)` opens the side drawer. `rag(failRate)` colors by current thresholds. */
 
 /* ============ Framework summary banner ============ */
-function IntroBanner({ g, a }) {
-  const pillars = [
-    { name: 'Availability', w: 40, q: 'Did the supplier return a rate at all?', code: 'F1' },
-    { name: 'Competitiveness', w: 35, q: 'Was the rate the best price available?', code: 'F2' },
-    { name: 'Reliability', w: 25, q: 'Did the booking actually complete?', code: 'F3' },
-  ];
+function IntroBanner() {
   return (
     <section className="intro">
-      <div className="intro-main">
-        <h2 className="intro-title">How to read this dashboard</h2>
-        <p className="intro-text">
-          Every hotel search can fail in six ways (<b>F1–F6</b>). We score each supplier, demand partner
-          and lane <b>0–100</b> on three pillars — weighted <b>40 / 35 / 25</b>. The combined failure rate
-          is <b>100 − health</b>: <span className="rag-word green">healthy under {g}%</span>,
-          <span className="rag-word amber"> watch {g}–{a}%</span>, <span className="rag-word red"> critical above {a}%</span>.
-          <b> F5</b> (competitive rate not surfaced) and <b>F6</b> (no option shown) are Nuitee-controlled and tracked separately.
-        </p>
+      <h2 className="intro-title">How to read this dashboard</h2>
+
+      <div className="intro-block">
+        <div className="intro-block-label">Supplier performance — health scored 0–100, three dimensions weighted equally</div>
+        <table className="intro-table">
+          <thead>
+            <tr><th>Dimension</th><th>Definition</th><th>Relevant failures measured</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Availability</b></td>
+              <td>Share of searches where the supplier returned at least one valid rate</td>
+              <td><span className="fcode">F1</span> No rate returned</td>
+            </tr>
+            <tr>
+              <td><b>Competitiveness</b></td>
+              <td>Share of searches where the supplier's rate was the best price available</td>
+              <td><span className="fcode">F2</span> Uncompetitive rate</td>
+            </tr>
+            <tr>
+              <td><b>Reliability</b></td>
+              <td>Share of bookings that completed successfully with acceptable speed</td>
+              <td><span className="fcode">F3</span> Booking failed &nbsp;<span className="fcode">F4</span> High latency</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div className="intro-pillars">
-        {pillars.map(p => (
-          <div className="intro-pillar" key={p.name}>
-            <div className="intro-pillar-h"><span className="intro-pillar-name">{p.name}</span><span className="intro-pillar-w">{p.w}%</span></div>
-            <div className="intro-pillar-q">{p.q}</div>
-            <div className="intro-pillar-code">inverse of {p.code}</div>
-          </div>
-        ))}
+
+      <div className="intro-block">
+        <div className="intro-block-label">Partner performance — primary signal: booking conversion vs 2.5% platform benchmark</div>
+        <table className="intro-table">
+          <thead>
+            <tr><th>Dimension</th><th>Definition</th><th>Relevant metrics</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Conversion rate</b></td>
+              <td>Share of searches that result in a confirmed booking</td>
+              <td>Conversion %, gap to 2.5% benchmark</td>
+            </tr>
+            <tr>
+              <td><b>Funnel efficiency</b></td>
+              <td>Step-by-step drop-off from search through to booking</td>
+              <td>Show rate, click-through rate, step conversion</td>
+            </tr>
+            <tr>
+              <td><b>Revenue contribution</b></td>
+              <td>Partner's share of total GMV, margin, and recoverable demand lost to unsurfaced rates</td>
+              <td>GMV, margin share %, F5 unsurfaced rate</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="intro-block">
+        <div className="intro-block-label">Failure types — F1–F4 are supplier-side; F5 and F6 are within Nuitee's control</div>
+        <table className="intro-table">
+          <thead>
+            <tr><th>Type</th><th>Definition</th><th>Relevant party</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span className="fcode">F1</span> No rate</td>
+              <td>Supplier returned no rate for the searched hotel</td>
+              <td>Supplier</td>
+            </tr>
+            <tr>
+              <td><span className="fcode">F2</span> Uncompetitive</td>
+              <td>Supplier returned a rate, but a cheaper alternative was available</td>
+              <td>Supplier</td>
+            </tr>
+            <tr>
+              <td><span className="fcode">F3</span> Booking failed</td>
+              <td>A booking attempt was initiated but did not complete successfully</td>
+              <td>Supplier</td>
+            </tr>
+            <tr>
+              <td><span className="fcode">F4</span> High latency</td>
+              <td>Supplier response exceeded the acceptable latency threshold</td>
+              <td>Supplier</td>
+            </tr>
+            <tr>
+              <td><span className="fcode">F5</span> Not surfaced</td>
+              <td>A competitive rate existed but was never shown to the partner</td>
+              <td>Nuitee — platform</td>
+            </tr>
+            <tr>
+              <td><span className="fcode">F6</span> Dead search</td>
+              <td>No competitive option was shown to any partner for this search</td>
+              <td>Nuitee — platform</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
   );

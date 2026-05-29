@@ -4,11 +4,11 @@
    mask bits: F1=1 F2=2 F3=4 F4=8 F5=16 F6=32
      F1 No rate returned      F2 Uncompetitive rate    F3 Booking failed
      F4 High latency          F5 Competitive not shown  F6 Dead search
-   Health = 0.40*availability + 0.35*competitiveness + 0.25*reliability  (all as % success). */
+   Health = equally weighted average of availability, competitiveness, reliability (all as % success). */
 (function () {
   var P = 0, S = 1, H = 2, SH = 3, O = 4, BV = 5, MG = 6, LT = 7, MK = 8, DY = 9;
   var F1 = 1, F2 = 2, F3 = 4, F4 = 8, F5 = 16, F6 = 32;
-  var W = [0.40, 0.35, 0.25];
+  var W = [1/3, 1/3, 1/3];
 
   function wk(day) { var w = Math.floor((day - 1) / 7); return w > 3 ? 3 : w; }
   function p95(arr) { if (!arr.length) return 0; arr.sort(function (a, b) { return a - b; }); return arr[Math.floor(0.95 * arr.length)] || arr[arr.length - 1]; }
