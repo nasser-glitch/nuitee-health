@@ -112,19 +112,34 @@ function PartnerDrawer({ data, rag, name }) {
   const notShown = 100 - p.showRate;
   const notClicked = 100 - p.clickThrough;
   const leak = [];
-  if (notShown > 70) leak.push(`${notShown.toFixed(0)}% of searches never surface a result — supplier availability or surfacing logic is the dominant leak.`);
-  if (notClicked > 50) leak.push(`${notClicked.toFixed(0)}% of shown results are never clicked — possible pricing or relevance issue at the point of display.`);
-  if (p.f5rate > 40) leak.push(`On ${p.f5rate.toFixed(0)}% of their searches a competitive rate existed but wasn't surfaced (F5) — recoverable demand.`);
-  if (!leak.length) leak.push('Funnel is converting in line with platform norms at each stage.');
+  if (notShown > 70) leak.push(`Engagement issue: ${notShown.toFixed(0)}% of searches were never shown a rate — supplier availability or surfacing logic is the dominant gap.`);
+  if (notClicked > 50) leak.push(`Conversion issue: ${notClicked.toFixed(0)}% of shown results are never clicked — rates may not be competitive for this partner's user base.`);
+  if (p.f5rate > 40) leak.push(`Value leak: on ${p.f5rate.toFixed(0)}% of their searches a competitive rate existed but wasn't surfaced (F5) — recoverable demand.`);
+  if (!leak.length) leak.push('All three dimensions — engagement, conversion, and value — are performing in line with platform norms.');
   const convRag = p.conv >= 2.5 ? 'green' : p.conv >= 1.6 ? 'amber' : 'red';
+  const engColor = p.engagement === 'up' ? 'var(--rag-green)' : p.engagement === 'down' ? 'var(--rag-red)' : 'var(--txt-2)';
   return (
     <div className="d-body">
       <div className="d-head">
         <div className="d-eyebrow">Demand partner</div>
         <div className="d-title-row"><h3 className="d-title">{p.name}</h3><span className="d-bigconv" style={{ color: ragColor(convRag) }}>{NF.pct(p.conv, 2)}<small>conversion</small></span></div>
-        <div className="d-substat">{NF.int(p.searched)} searches · {p.booked} bookings · engagement {p.engagement === 'up' ? 'rising' : p.engagement === 'down' ? 'falling' : 'flat'}</div>
+        <div className="d-substat">{NF.int(p.searched)} searches · {p.booked} bookings · volume {p.engagement === 'up' ? 'rising' : p.engagement === 'down' ? 'falling' : 'stable'}</div>
       </div>
-      <DSection title="Conversion funnel">
+
+      <DSection title="Engagement" note="search volume trend">
+        <div className="d-statpair">
+          <div><span>Total searches</span><b>{NF.int(p.searched)}</b></div>
+          <div><span>Volume trend</span><b style={{ color: engColor }}>{p.engagement === 'up' ? '↑ growing' : p.engagement === 'down' ? '↓ falling' : '→ stable'}</b></div>
+          <div><span>Show rate</span><b>{NF.pct(p.showRate)}</b></div>
+        </div>
+      </DSection>
+
+      <DSection title="Conversion" note="booked ÷ shown">
+        <div className="metric-cards" style={{ marginBottom: 14 }}>
+          <div className="metric-card"><span className="mc-lbl">Booked ÷ shown</span><span className="mc-val" style={{ color: ragColor(convRag) }}>{NF.pct(p.conv, 2)}</span></div>
+          <div className="metric-card"><span className="mc-lbl">Click-through</span><span className="mc-val">{NF.pct(p.clickThrough)}</span></div>
+          <div className="metric-card"><span className="mc-lbl">Bookings</span><span className="mc-val">{NF.int(p.booked)}</span></div>
+        </div>
         <div className="funnel">
           {stages.map((s, i) => {
             const pct = 100 * s.value / stages[0].value;
@@ -139,11 +154,20 @@ function PartnerDrawer({ data, rag, name }) {
           })}
         </div>
       </DSection>
-      <div className="d-2col">
-        <DSection title="Revenue"><div className="d-statpair"><div><span>GMV</span><b>{NF.money0(p.revenue)}</b></div><div><span>Margin</span><b>{NF.money0(p.margin)}</b></div></div></DSection>
-        <DSection title="Unsurfaced rates"><div className="d-statpair"><div><span>F5 rate</span><b style={{ color: ragColor(rag(p.f5rate)) }}>{NF.pct(p.f5rate)}</b></div><div><span>Margin share</span><b>{NF.pct(p.marginShare)}</b></div></div></DSection>
-      </div>
-      <DSection title="Where they leak most">
+
+      <DSection title="Value" note="booking value &amp; margin">
+        <div className="d-statpair">
+          <div><span>Avg booking</span><b>{NF.money0(p.avgBookingValue)}</b></div>
+          <div><span>Total GMV</span><b>{NF.money0(p.revenue)}</b></div>
+          <div><span>Margin</span><b>{NF.money0(p.margin)}</b></div>
+          <div><span>Margin share</span><b>{NF.pct(p.marginShare)}</b></div>
+        </div>
+        <div className="d-statpair" style={{ marginTop: 12 }}>
+          <div><span>F5 unsurfaced rate</span><b style={{ color: ragColor(rag(p.f5rate)) }}>{NF.pct(p.f5rate)}</b></div>
+        </div>
+      </DSection>
+
+      <DSection title="Where they need attention">
         <Hyp items={leak} />
       </DSection>
       <div className="d-2col">

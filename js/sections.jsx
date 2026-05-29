@@ -9,9 +9,9 @@ function IntroBanner() {
     { name: 'Reliability',      q: 'Share of bookings that completed successfully with acceptable speed',           code: 'F3 — Booking failed · F4 — High latency' },
   ];
   const partnerDims = [
-    { name: 'Conversion rate',       q: 'Share of searches that result in a confirmed booking',                                          code: 'Conversion % · gap to 2.5% benchmark' },
-    { name: 'Funnel efficiency',     q: 'Step-by-step drop-off from search through to booking',                                          code: 'Show rate · click-through rate · step conversion' },
-    { name: 'Revenue contribution',  q: 'Partner\'s share of total GMV, margin, and recoverable demand lost to unsurfaced rates',         code: 'GMV · margin share % · F5 unsurfaced rate' },
+    { name: 'Engagement',  q: 'Is the partner searching actively? Volume trend over the period — growing, flat, or dropping.',                                         code: 'Search volume · volume trend (↑ / flat / ↓)' },
+    { name: 'Conversion',  q: 'Of searches where a rate was shown, how many became bookings? A low click→book rate signals rates aren\'t competitive for their users.', code: 'Booked ÷ shown · click→book rate' },
+    { name: 'Value',       q: 'Average booking value and margin contribution. High volume with thin margins is a different problem to low volume with strong margins.',  code: 'Avg booking value · GMV · margin share %' },
   ];
   const failures = [
     { code: 'F1', name: 'No rate',        q: 'Supplier returned no rate for the searched hotel',                        party: 'Supplier',          pc: 'var(--txt-3)' },
@@ -41,7 +41,7 @@ function IntroBanner() {
       </div>
 
       <div className="intro-group">
-        <div className="intro-group-label">Partner performance — primary signal: booking conversion vs 2.5% platform benchmark</div>
+        <div className="intro-group-label">Partner performance — three dimensions: engagement, conversion, value</div>
         <div className="intro-pillars">
           {partnerDims.map((p, i) => (
             <div className="intro-pillar" key={p.name}>
@@ -153,7 +153,6 @@ function SupplierPanel({ data, rag, onOpen }) {
 
 /* ============ SECTION 2 — Partner panel ============ */
 function PartnerPanel({ data, rag, onOpen }) {
-  const maxMargin = Math.max(...data.partners.map(p => p.margin)) || 1;
   const partners = [...data.partners].sort((a, b) => a.conv - b.conv);
   return (
     <section className="panel">
@@ -171,17 +170,15 @@ function PartnerPanel({ data, rag, onOpen }) {
             <button key={p.name} className="row part-row" onClick={() => onOpen({ type: 'partner', name: p.name })}>
               <div className="row-name">
                 <span className="row-name-txt">{p.name}</span>
-                <span className="row-meta">{NF.money0(p.margin)} margin</span>
+                <span className="row-meta">{NF.int(p.searched)} searches</span>
               </div>
               <div className="part-funnel">
-                <FunnelDots stages={[
-                  { label: 'searched', value: p.searched }, { label: 'shown', value: p.shown },
-                  { label: 'clicked', value: p.clicked }, { label: 'booked', value: p.booked }]} color="var(--accent)" />
                 <TrendArrow dir={p.engagement} />
+                <span className="part-eng-lbl">{p.engagement === 'up' ? 'growing' : p.engagement === 'down' ? 'falling' : 'stable'}</span>
               </div>
               <div className="part-margin">
-                <span className="part-margin-lbl">margin share</span>
-                <FillBar value={p.margin} max={maxMargin} color="var(--accent-2)" />
+                <span className="part-margin-lbl">avg booking</span>
+                <span className="part-avbv">{NF.money(p.avgBookingValue)}</span>
               </div>
               <span className="part-conv" style={{ color: ragColor(convRag) }}>{NF.pct(p.conv, 2)}</span>
             </button>

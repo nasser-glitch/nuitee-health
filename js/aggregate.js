@@ -109,11 +109,11 @@
     var totMarginAll = totMargin || 1;
     var partners = PARTNERS.map(function (p) {
       var o = partA[p]; if (!o.n) return null;
-      var conv = 100 * o.booked / o.n;
+      var conv = 100 * o.booked / Math.max(1, o.shown);
       var pav = 100 * (1 - o.f1 / o.n), pco = 100 * (1 - o.f2 / o.n), pre = 100 * (1 - o.f3 / o.n);
-      var fh = (o.wk[0][1] + o.wk[1][1]) / Math.max(1, o.wk[0][0] + o.wk[1][0]);
-      var sh = (o.wk[2][1] + o.wk[3][1]) / Math.max(1, o.wk[2][0] + o.wk[3][0]);
-      var eng = sh > fh * 1.05 ? 'up' : sh < fh * 0.95 ? 'down' : 'flat';
+      var earlyVol = o.wk[0][0] + o.wk[1][0];
+      var recentVol = o.wk[2][0] + o.wk[3][0];
+      var eng = recentVol > earlyVol * 1.05 ? 'up' : recentVol < earlyVol * 0.95 ? 'down' : 'flat';
       var supHealths = SUPPLIERS.map(function (s) {
         var d = cellA[p + '|' + s]; if (!d.n) return null;
         var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.f3 / d.n);
@@ -126,6 +126,8 @@
         f5: o.f5, f5rate: r1(100 * o.f5 / o.n),
         clickThrough: r1(100 * o.clicked / Math.max(1, o.shown)), showRate: r1(100 * o.shown / o.n),
         conv: r2(conv), engagement: eng,
+        avgBookingValue: Math.round(o.bval / Math.max(1, o.booked)),
+        weeklySearches: [o.wk[0][0], o.wk[1][0], o.wk[2][0], o.wk[3][0]],
         weeklyConv: o.wk.map(function (w) { return w[0] ? r2(100 * w[1] / w[0]) : 0; }),
         bestSuppliers: supHealths.slice(0, 2), worstSuppliers: supHealths.slice(-2).reverse()
       };
