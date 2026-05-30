@@ -278,22 +278,24 @@
         ins.push({ priority: 4, category: 'Volume', headline: 'Search volume up ' + Math.round(volDelta*100) + '% over the period', body: 'Increased routing to this supplier. Monitor quality metrics to ensure health holds under higher load.' });
       }
 
-      // WHY ARE BOOKINGS LOW / DECLINING
-      if (bench.medianSupBookings > 0 && sup.booked < bench.medianSupBookings * 0.3) {
-        var dom = getDominantFailure(f1r, f2r, f3r);
-        ins.push({ priority: 2, category: 'Conversion', headline: 'Bookings low vs platform peers — ' + sup.booked + ' vs median ' + Math.round(bench.medianSupBookings), body: 'Primary cause: ' + dom.label + ' (' + dom.rate.toFixed(0) + '% of searches). ' + dom.explanation });
-      }
-      if (bench.medianSupBookRate > 0 && bookRate < bench.medianSupBookRate * 0.5) {
-        var mult = (bench.medianSupBookRate / Math.max(0.01, bookRate)).toFixed(1);
-        var dom = getDominantFailure(f1r, f2r, f3r);
-        ins.push({ priority: 2, category: 'Conversion', headline: 'Booking rate ' + bookRate.toFixed(1) + '% — ' + mult + '× below platform median (' + bench.medianSupBookRate.toFixed(1) + '%)', body: 'Primary cause: ' + dom.label + '. ' + dom.explanation });
-      }
+      // WHY ARE BOOKINGS LOW / DECLINING — trend takes priority; among absolute checks emit only one
+      var bookingDomKey = null;
       if (bookDelta < -0.25 && (earlyBook + recentBook) > 0) {
         var pctDown = Math.round(Math.abs(bookDelta)*100);
         var dom = getDominantFailure(f1r, f2r, f3r);
+        bookingDomKey = dom.key;
         if (dom.key === 'f1') ins.push({ priority: 1, category: 'Availability', headline: 'Bookings down ' + pctDown + '% — no-rate failures (' + f1r.toFixed(0) + '%) are the primary blocker', body: 'If the supplier can\'t return a rate, there\'s nothing to book. ' + f1r.toFixed(0) + '% of searches return empty vs platform avg ' + bench.f1rate.toFixed(0) + '%.' });
         else if (dom.key === 'f2') ins.push({ priority: 2, category: 'Competitiveness', headline: 'Bookings down ' + pctDown + '% — rates losing to competitors on ' + f2r.toFixed(0) + '% of searches', body: 'Rates are returned but uncompetitive on ' + f2r.toFixed(0) + '% of searches vs platform average of ' + bench.f2rate.toFixed(0) + '%.' });
         else ins.push({ priority: 1, category: 'Reliability', headline: 'Bookings down ' + pctDown + '% — ' + f3r.toFixed(2) + '% of booking attempts are failing', body: 'Booking failures are directly losing confirmed revenue. Check inventory lock and rate-recheck behaviour.' });
+      } else if (bench.medianSupBookings > 0 && sup.booked < bench.medianSupBookings * 0.3) {
+        var dom = getDominantFailure(f1r, f2r, f3r);
+        bookingDomKey = dom.key;
+        ins.push({ priority: 2, category: 'Conversion', headline: 'Bookings low vs platform peers — ' + sup.booked + ' vs median ' + Math.round(bench.medianSupBookings), body: 'Primary cause: ' + dom.label + ' (' + dom.rate.toFixed(0) + '% of searches). ' + dom.explanation });
+      } else if (bench.medianSupBookRate > 0 && bookRate < bench.medianSupBookRate * 0.5) {
+        var mult = (bench.medianSupBookRate / Math.max(0.01, bookRate)).toFixed(1);
+        var dom = getDominantFailure(f1r, f2r, f3r);
+        bookingDomKey = dom.key;
+        ins.push({ priority: 2, category: 'Conversion', headline: 'Booking rate ' + bookRate.toFixed(1) + '% — ' + mult + '× below platform median (' + bench.medianSupBookRate.toFixed(1) + '%)', body: 'Primary cause: ' + dom.label + '. ' + dom.explanation });
       }
 
       // WHY IS LATENCY HIGH
@@ -314,20 +316,24 @@
         ins.push({ priority: 1, category: 'Reliability', headline: 'Booking failure rate is ' + f3r.toFixed(2) + '% — ' + sup.f3 + ' failed bookings', body: 'Each failure is a confirmed booking lost. Check inventory lock, rate recheck, and live availability.' });
       }
 
-      // WHY ARE RATES NOT COMPETITIVE (F2)
-      if (f2r > bench.f2rate * 2) {
-        ins.push({ priority: 2, category: 'Competitiveness', headline: 'Uncompetitive on ' + f2r.toFixed(0) + '% of searches — ' + (bench.f2rate > 0 ? (f2r/bench.f2rate).toFixed(1) : '—') + '× the platform average', body: 'Rates exist but are systematically above market. Contracted rate levels or markup configuration is the likely cause.' });
-      } else if (f2r > bench.f2rate * 1.5) {
-        ins.push({ priority: 3, category: 'Competitiveness', headline: 'Competitiveness below platform median — ' + f2r.toFixed(0) + '% uncompetitive vs avg ' + bench.f2rate.toFixed(0) + '%', body: 'Room to improve — reducing the uncompetitive rate by half would materially lift booking volume.' });
+      // WHY ARE RATES NOT COMPETITIVE (F2) — skip if already the dominant cause in the booking insight
+      if (bookingDomKey !== 'f2') {
+        if (f2r > bench.f2rate * 2) {
+          ins.push({ priority: 2, category: 'Competitiveness', headline: 'Uncompetitive on ' + f2r.toFixed(0) + '% of searches — ' + (bench.f2rate > 0 ? (f2r/bench.f2rate).toFixed(1) : '—') + '× the platform average', body: 'Rates exist but are systematically above market. Contracted rate levels or markup configuration is the likely cause.' });
+        } else if (f2r > bench.f2rate * 1.5) {
+          ins.push({ priority: 3, category: 'Competitiveness', headline: 'Competitiveness below platform median — ' + f2r.toFixed(0) + '% uncompetitive vs avg ' + bench.f2rate.toFixed(0) + '%', body: 'Room to improve — reducing the uncompetitive rate by half would materially lift booking volume.' });
+        }
       }
 
-      // WHY ARE RATES NOT SHOWING (F1)
-      if (f1r > bench.f1rate * 2) {
-        var hotelStr = sup.topHotels.length > 0 ? ' Top affected: hotel #' + sup.topHotels[0].hotel + (sup.topHotels[1] ? ', #' + sup.topHotels[1].hotel : '') + '.' : '';
-        ins.push({ priority: 1, category: 'Availability', headline: 'No-rate rate ' + f1r.toFixed(0) + '% — ' + (bench.f1rate > 0 ? (f1r/bench.f1rate).toFixed(1) : '—') + '× the platform average (' + bench.f1rate.toFixed(0) + '%)', body: hotelStr + ' Indicates missing inventory mapping or thin coverage for the property types being searched.' });
-      } else if (f1r > bench.f1rate * 1.5) {
-        var hotelStr = sup.topHotels.length > 0 ? 'Most failures at hotel #' + sup.topHotels[0].hotel + ' (' + sup.topHotels[0].fails + ' fails). ' : '';
-        ins.push({ priority: 2, category: 'Availability', headline: 'Availability below platform median — ' + f1r.toFixed(0) + '% of searches return nothing', body: hotelStr + 'Review inventory coverage for these properties.' });
+      // WHY ARE RATES NOT SHOWING (F1) — skip if already the dominant cause in the booking insight
+      if (bookingDomKey !== 'f1') {
+        if (f1r > bench.f1rate * 2) {
+          var hotelStr = sup.topHotels.length > 0 ? ' Top affected: hotel #' + sup.topHotels[0].hotel + (sup.topHotels[1] ? ', #' + sup.topHotels[1].hotel : '') + '.' : '';
+          ins.push({ priority: 1, category: 'Availability', headline: 'No-rate rate ' + f1r.toFixed(0) + '% — ' + (bench.f1rate > 0 ? (f1r/bench.f1rate).toFixed(1) : '—') + '× the platform average (' + bench.f1rate.toFixed(0) + '%)', body: hotelStr + ' Indicates missing inventory mapping or thin coverage for the property types being searched.' });
+        } else if (f1r > bench.f1rate * 1.5) {
+          var hotelStr = sup.topHotels.length > 0 ? 'Most failures at hotel #' + sup.topHotels[0].hotel + ' (' + sup.topHotels[0].fails + ' fails). ' : '';
+          ins.push({ priority: 2, category: 'Availability', headline: 'Availability below platform median — ' + f1r.toFixed(0) + '% of searches return nothing', body: hotelStr + 'Review inventory coverage for these properties.' });
+        }
       }
 
       sup.insights = dedupeInsights(ins).sort(function(a,b){ return a.priority - b.priority; });
@@ -360,22 +366,23 @@
         ins.push({ priority: 4, category: 'Volume', headline: 'Search volume up ' + Math.round(volDelta*100) + '% — engagement growing', body: 'Rising volume from this partner. Ensure supplier coverage is sufficient to handle the increase.' });
       }
 
-      // WHY ARE BOOKINGS LOW / DECLINING
+      // WHY ARE BOOKINGS LOW / DECLINING — emit only one absolute check
       if (bench.medianPartBookings > 0 && p.booked < bench.medianPartBookings * 0.3) {
         var bottleneck = getFunnelBottleneck(showRate, clickRate, bookRate);
         ins.push({ priority: 2, category: 'Conversion', headline: 'Bookings low vs platform peers — ' + p.booked + ' vs median ' + Math.round(bench.medianPartBookings), body: 'Funnel bottleneck: ' + bottleneck });
-      }
-      if (bench.partnerConv > 0 && p.conv < bench.partnerConv * 0.5) {
+      } else if (bench.partnerConv > 0 && p.conv < bench.partnerConv * 0.5) {
         var bottleneck = getFunnelBottleneck(showRate, clickRate, bookRate);
         ins.push({ priority: 2, category: 'Conversion', headline: 'Booking conversion ' + p.conv.toFixed(1) + '% — below platform median (' + bench.partnerConv.toFixed(1) + '%)', body: 'Even with normal search volume, fewer than expected searches end in bookings. ' + bottleneck });
       }
 
       // Funnel drop-off
+      var emittedBookFailed = false;
       if (showRate < 60) {
         ins.push({ priority: 1, category: 'Availability', headline: 'Only ' + showRate.toFixed(0) + '% of searches result in a rate being shown', body: 'Most searches result in nothing shown to the user. Primary cause: F1 (no rate returned) or F6 (dead search) — supplier-side coverage gap is blocking demand.' });
       } else if (clickRate < 30) {
         ins.push({ priority: 2, category: 'Competitiveness', headline: 'Rates shown but only ' + clickRate.toFixed(0) + '% are clicked', body: 'Users are seeing rates but not engaging. Rates may not be price-competitive for this partner\'s market — check F2 rates from the worst-served supplier.' });
       } else if (bookRate < 20 && p.bookFailed > 5) {
+        emittedBookFailed = true;
         ins.push({ priority: 1, category: 'Reliability', headline: NF2.int(p.bookFailed) + ' booking attempts failed — users clicked but couldn\'t complete', body: 'Checkout failures destroy conversion. Likely cause: inventory lock or rate expiry between click and booking.' });
       }
 
@@ -384,8 +391,8 @@
         ins.push({ priority: 3, category: 'Latency', headline: 'Latency health ' + p.latency.toFixed(0) + '% — ' + (bench.latency - p.latency).toFixed(0) + ' pts below platform average', body: 'Slow responses increase abandonment before users see prices.' + (worstSup ? ' Worst supplier: ' + worstSup + '.' : '') });
       }
 
-      // Booking failures
-      if (p.bookFailed > 10) {
+      // Booking failures — only if not already surfaced in funnel block
+      if (p.bookFailed > 10 && !emittedBookFailed) {
         ins.push({ priority: 1, category: 'Reliability', headline: NF2.int(p.bookFailed) + ' booking attempts failed this period', body: 'Each failure is a confirmed user intent lost.' + (worstSup ? ' Worst supplier: ' + worstSup + '.' : '') });
       }
 
