@@ -27,8 +27,8 @@ function Donut({ segments, size = 132, thickness = 16, center }) {
       })}
       {center && (
         <g>
-          <text x={cx} y={cx - 2} textAnchor="middle" style={{ fill: 'var(--txt-1)', font: '600 22px Inter', letterSpacing: '-0.02em' }}>{center.top}</text>
-          <text x={cx} y={cx + 16} textAnchor="middle" style={{ fill: 'var(--txt-2)', font: '500 10px Inter', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{center.bottom}</text>
+          <text x={cx} y={cx - 2} textAnchor="middle" style={{ fill: 'var(--txt-1)', font: '600 33px Inter', letterSpacing: '-0.02em' }}>{center.top}</text>
+          <text x={cx} y={cx + 20} textAnchor="middle" style={{ fill: 'var(--txt-2)', font: '500 15px Inter', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{center.bottom}</text>
         </g>
       )}
     </svg>
@@ -139,9 +139,9 @@ function MiniBars({ items, height = 92 }) {
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height }}>
       {items.map((it, i) => (
         <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' }}>
-          <span style={{ font: '600 11px Inter', color: 'var(--txt-1)' }}>{it.value.toLocaleString()}</span>
-          <div style={{ width: '100%', maxWidth: 34, height: Math.max(3, (it.value / max) * (height - 34)), background: it.color || 'var(--accent)', borderRadius: '4px 4px 0 0' }} />
-          <span style={{ font: '500 10px Inter', color: 'var(--txt-2)', textAlign: 'center' }}>{it.label}</span>
+          <span style={{ font: '600 17px Inter', color: 'var(--txt-1)' }}>{it.value.toLocaleString()}</span>
+          <div style={{ width: '100%', maxWidth: 44, height: Math.max(3, (it.value / max) * (height - 44)), background: it.color || 'var(--accent)', borderRadius: '4px 4px 0 0' }} />
+          <span style={{ font: '500 15px Inter', color: 'var(--txt-2)', textAlign: 'center' }}>{it.label}</span>
         </div>
       ))}
     </div>
@@ -158,8 +158,8 @@ function TrendArrow({ dir, size = 13 }) {
 /* ---- Health score chip ---- */
 function HealthScore({ value, rag, size = 'md' }) {
   const c = ragColor(rag);
-  const dim = size === 'lg' ? 44 : size === 'sm' ? 30 : 38;
-  const fs = size === 'lg' ? 16 : size === 'sm' ? 12 : 14;
+  const dim = size === 'lg' ? 56 : size === 'sm' ? 40 : 48;
+  const fs = size === 'lg' ? 22 : size === 'sm' ? 16 : 19;
   return (
     <div style={{
       width: dim, height: dim, borderRadius: 9, display: 'grid', placeItems: 'center',

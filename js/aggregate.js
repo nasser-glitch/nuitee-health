@@ -179,7 +179,7 @@
       if ((ev2[MK] & F5) && ev2[O] !== 3) f5notBooked++;
     }
     var worstSup = suppliers[0] || { name: '—', health: 100 };
-    var worstPartner = partners[partners.length - 1] || { name: '—', conv: 0 };
+    var worstPartner = partners.length ? partners.reduce(function(a, b) { return b.revenue < a.revenue ? b : a; }) : { name: '—', conv: 0, revenue: 0 };
     var summary = {
       totalSearches: totSearchIds.size,
       bookingConv: r2(100 * overallConv), bookingBenchmark: 2.50,

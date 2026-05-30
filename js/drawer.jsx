@@ -119,9 +119,9 @@ function buildHotelInsights(c, sup, bench) {
 }
 
 function HeadlineKPIs({ a, b }) {
-  const style = { display: 'flex', gap: 24, marginTop: 14 };
-  const valStyle = { font: '600 22px Inter', color: 'var(--txt-1)', letterSpacing: '-0.02em', display: 'block' };
-  const lblStyle = { font: '500 11px Inter', color: 'var(--txt-2)', marginTop: 3, display: 'block' };
+  const style = { display: 'flex', gap: 36, marginTop: 20 };
+  const valStyle = { font: '600 33px Inter', color: 'var(--txt-1)', letterSpacing: '-0.02em', display: 'block' };
+  const lblStyle = { font: '500 17px Inter', color: 'var(--txt-2)', marginTop: 5, display: 'block' };
   const divStyle = { width: 1, background: 'var(--border)', margin: '2px 0 6px' };
   return (
     <div style={style}>
@@ -158,7 +158,7 @@ function SupplierDrawer({ data, rag, name }) {
       </div>
       <DSection title="Failure breakdown" note="share of failures">
         <div className="donut-wrap">
-          <Donut segments={donut} center={{ top: NF.pct(fr), bottom: 'fail rate' }} />
+          <Donut segments={donut} size={180} thickness={22} center={{ top: NF.pct(fr), bottom: 'fail rate' }} />
           <div className="donut-legend">
             {donut.map((d, i) => (
               <div key={i} className="legend-item">
@@ -176,7 +176,7 @@ function SupplierDrawer({ data, rag, name }) {
             <div key={i} className="metric-card">
               <span className="mc-lbl">{k.label}</span>
               <span className="mc-val" style={{ color: k.color }}>{NF.pct(k.value)}</span>
-              <span style={{ font: '400 10.5px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 5, lineHeight: 1.4 }}>{k.desc}</span>
+              <span style={{ font: '400 16px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 7, lineHeight: 1.4 }}>{k.desc}</span>
             </div>
           ))}
         </div>
@@ -282,7 +282,7 @@ function PartnerDrawer({ data, rag, name }) {
             <span className="mc-val">{NF.int(p.f5)}</span>
           </div>
         </div>
-        <div style={{ font: '400 11px Inter', color: 'var(--txt-3)', lineHeight: 1.5 }}>
+        <div style={{ font: '400 17px Inter', color: 'var(--txt-3)', lineHeight: 1.5 }}>
           % of searches where a supplier had a competitive rate available that was never surfaced to this partner.
         </div>
       </DSection>
@@ -415,27 +415,27 @@ function RiskBreakdown({ data }) {
           <div className="metric-card">
             <span className="mc-lbl">F5 searches not booked</span>
             <span className="mc-val">{NF.int(s.f5notBooked)}</span>
-            <span style={{ font: '400 10.5px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 5, lineHeight: 1.4 }}>Searches where a competitive rate existed but wasn't surfaced, and no booking occurred</span>
+            <span style={{ font: '400 16px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 7, lineHeight: 1.4 }}>Searches where a competitive rate existed but wasn't surfaced, and no booking occurred</span>
           </div>
           <div className="metric-card">
             <span className="mc-lbl">Platform conversion</span>
             <span className="mc-val">{NF.pct(s.bookingConv, 2)}</span>
-            <span style={{ font: '400 10.5px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 5, lineHeight: 1.4 }}>Baseline booking rate across all searches on the platform</span>
+            <span style={{ font: '400 16px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 7, lineHeight: 1.4 }}>Baseline booking rate across all searches on the platform</span>
           </div>
           <div className="metric-card">
             <span className="mc-lbl">Avg booking value</span>
             <span className="mc-val">{NF.money0(s.avgBookingValue)}</span>
-            <span style={{ font: '400 10.5px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 5, lineHeight: 1.4 }}>Average GMV per completed booking in this period</span>
+            <span style={{ font: '400 16px Inter', color: 'var(--txt-3)', display: 'block', marginTop: 7, lineHeight: 1.4 }}>Average GMV per completed booking in this period</span>
           </div>
         </div>
       </DSection>
       <DSection title="Formula">
-        <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', font: '13px/1.7 Inter', color: 'var(--txt-2)' }}>
-          <div style={{ marginBottom: 10 }}>F5-unbooked searches × platform conversion × avg booking value</div>
+        <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: '22px 26px', font: '20px/1.7 Inter', color: 'var(--txt-2)' }}>
+          <div style={{ marginBottom: 14 }}>F5-unbooked searches × platform conversion × avg booking value</div>
           <div style={{ color: 'var(--txt-1)', fontWeight: 500 }}>
             {NF.int(s.f5notBooked)} × {NF.pct(s.bookingConv, 2)} × {NF.money0(s.avgBookingValue)}
           </div>
-          <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 12, font: '600 20px Inter', letterSpacing: '-.02em', color: 'var(--txt-1)' }}>
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16, font: '600 30px Inter', letterSpacing: '-.02em', color: 'var(--txt-1)' }}>
             = {NF.money(s.revenueAtRisk)}
           </div>
         </div>

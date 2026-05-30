@@ -12,7 +12,7 @@ function SummaryCards({ data, rag, onOpen, onFocus, active }) {
     { key: 'conv', rag: convRag, value: NF.pct(s.bookingConv, 2), label: 'Booking conversion', desc: `Share of searches ending in a confirmed booking, against the ${s.bookingBenchmark}% platform benchmark.`, action: () => onFocus('partners') },
     { key: 'risk', rag: riskRag, value: NF.money(s.revenueAtRisk), label: 'Estimated revenue at risk', desc: 'Monthly GMV we\'d likely recover if the competitive rates we failed to surface had been shown.', calc: s.revenueAtRiskAssumption, action: () => onOpen({ type: 'risk' }) },
     { key: 'supplier', rag: 'red', value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ' fail', label: 'Worst performing supplier', desc: 'Highest combined failure rate across availability, competitiveness, reliability and latency.', action: () => onOpen({ type: 'supplier', name: s.topFailingSupplier.name }) },
-    { key: 'partner', rag: 'amber', value: s.topFailingPartner.name, big: false, valuePct: NF.money(s.topFailingPartner.revenue) + ' GMV', label: 'Worst performing partner', desc: 'Demand partner with the lowest booking conversion — the biggest missed-conversion gap.', action: () => onOpen({ type: 'partner', name: s.topFailingPartner.name }) },
+    { key: 'partner', rag: 'amber', value: s.topFailingPartner.name, big: false, valuePct: NF.money(s.topFailingPartner.revenue) + ' GMV', label: 'Worst performing partner', desc: 'Demand partner generating the lowest total GMV this period — least revenue contribution across all bookings.', action: () => onOpen({ type: 'partner', name: s.topFailingPartner.name }) },
   ];
   return (
     <div className="cards-row">
