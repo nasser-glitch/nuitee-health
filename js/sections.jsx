@@ -111,10 +111,10 @@ function SupplierPanel({ data, rag, onOpen }) {
               <span className="row-meta">{NF.int(sup.searches)} searches</span>
             </div>
             <div className="sup-pills">
-              <MetricPill label="available" value={sup.availability} color="var(--accent)" />
-              <MetricPill label="competitive" value={sup.competitiveness} color="var(--accent-2)" />
-              <MetricPill label="reliable" value={sup.reliability} color="var(--accent)" />
-              <MetricPill label="latency" value={sup.latency} color="var(--accent-2)" />
+              <MetricPill label="available" value={sup.availability} color="var(--accent)" dp={0} />
+              <MetricPill label="competitive" value={sup.competitiveness} color="var(--accent-2)" dp={0} />
+              <MetricPill label="reliable" value={sup.reliability} color="var(--accent)" dp={0} />
+              <MetricPill label="latency" value={sup.latency} color="var(--accent-2)" dp={0} />
             </div>
             <HealthScore value={sup.health} rag={healthRag(sup.health)} />
           </button>

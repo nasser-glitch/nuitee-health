@@ -237,7 +237,7 @@ function PartnerDrawer({ data, rag, name }) {
     <div className="d-body">
       <div className="d-head">
         <div className="d-eyebrow">Demand partner</div>
-        <div className="d-title-row"><h3 className="d-title">{p.name}</h3><HealthScore value={p.health} rag={healthRag(p.health)} size="lg" /></div>
+        <div className="d-title-row"><h3 className="d-title">{p.name}</h3></div>
         <HeadlineKPIs a={{ value: NF.int(p.searched), label: 'searches' }} b={{ value: NF.int(p.booked), label: 'bookings' }} />
       </div>
 
