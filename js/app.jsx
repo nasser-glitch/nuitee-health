@@ -182,7 +182,7 @@ function App() {
     <div className="app">
       <header className="topbar">
         <div className="topbar-left">
-          <span className="wordmark">nuitee</span>
+          <img src="nuitee-logo.svg" alt="nuitee" style={{ height: '28px', display: 'block' }} />
           <span className="topbar-divider" />
           <h1 className="topbar-title">Health Dashboard</h1>
           <span className="topbar-date">{dateLabel}</span>

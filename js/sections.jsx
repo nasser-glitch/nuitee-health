@@ -10,7 +10,7 @@ function SummaryCards({ data, rag, onOpen, onFocus, active }) {
   const cards = [
     { key: 'searches', neutral: true, value: NF.int(s.totalSearches), label: 'Total searches', status: 'Volume', desc: 'Search requests routed across all partners and suppliers in the period.', action: null },
     { key: 'conv', rag: convRag, value: NF.pct(s.bookingConv, 2), label: 'Booking conversion', desc: `Share of searches ending in a confirmed booking, against the ${s.bookingBenchmark}% platform benchmark.`, action: () => onFocus('partners') },
-    { key: 'risk', rag: riskRag, value: NF.money(s.revenueAtRisk), label: 'Estimated revenue at risk', desc: 'Monthly GMV we\'d likely recover if the competitive rates we failed to surface had been shown.', calc: s.revenueAtRiskAssumption, action: () => onFocus('platform') },
+    { key: 'risk', rag: riskRag, value: NF.money(s.revenueAtRisk), label: 'Estimated revenue at risk', desc: 'Monthly GMV we\'d likely recover if the competitive rates we failed to surface had been shown.', calc: s.revenueAtRiskAssumption, action: () => onOpen({ type: 'risk' }) },
     { key: 'supplier', rag: 'red', value: s.topFailingSupplier.name, big: false, valuePct: NF.pct(s.topFailingSupplier.failRate) + ' fail', label: 'Worst performing supplier', desc: 'Highest combined failure rate across availability, competitiveness, reliability and latency.', action: () => onOpen({ type: 'supplier', name: s.topFailingSupplier.name }) },
     { key: 'partner', rag: 'amber', value: s.topFailingPartner.name, big: false, valuePct: NF.money(s.topFailingPartner.revenue) + ' GMV', label: 'Worst performing partner', desc: 'Demand partner with the lowest booking conversion — the biggest missed-conversion gap.', action: () => onOpen({ type: 'partner', name: s.topFailingPartner.name }) },
   ];
@@ -268,25 +268,34 @@ function PlatformHealth({ data, onOpen, expandedRef }) {
   );
 }
 
-/* ============ SECTION 4 — Partner × Supplier matrix ============ */
+/* ============ SECTION 4 — Supplier × Hotel matrix ============ */
 function Matrix({ data, rag, cellStyle, onOpen }) {
   const [hover, setHover] = React.useState(null);
-  const cols = data.suppliers.map(s => s.name);
-  const colHealth = {}; data.suppliers.forEach(s => colHealth[s.name] = s.health);
-  const rows = [...data.partners].sort((a, b) => a.health - b.health).map(p => p.name);
-  const rowHealth = {}; data.partners.forEach(p => rowHealth[p.name] = p.health);
+  const cols = data.topHotels || [];
+  const rows = [...data.suppliers].sort((a, b) => a.health - b.health).map(s => s.name);
+  const rowHealth = {};
+  data.suppliers.forEach(s => rowHealth[s.name] = s.health);
+
+  const hotelHealth = {};
+  cols.forEach(h => {
+    let totalSearches = 0, totalWeighted = 0;
+    rows.forEach(s => {
+      const c = data.hotelMatrix[s] && data.hotelMatrix[s][h];
+      if (c && c.searches) { totalSearches += c.searches; totalWeighted += c.health * c.searches; }
+    });
+    hotelHealth[h] = totalSearches > 0 ? Math.round(totalWeighted / totalSearches) : null;
+  });
 
   function cellVisual(c) {
-    if (!c) return { bg: 'transparent', border: 'var(--border)', text: 'var(--txt-3)', rag: null };
-    const r = healthRag(c.health); const col = ragColor(r);
-    return { rag: r, col };
+    if (!c) return { col: null };
+    return { col: ragColor(healthRag(c.health)) };
   }
   return (
     <section className="panel matrix-panel">
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">Partner × supplier matrix</h2>
-          <span className="panel-sub">Combined health score · worst lanes top-left · hover for detail, click to drill in</span>
+          <h2 className="panel-title">Supplier × hotel matrix</h2>
+          <span className="panel-sub">Health score per supplier per hotel · worst suppliers first · top 15 hotels by volume · hover for detail, click to drill in</span>
         </div>
       </div>
       <div className="matrix-scroll">
@@ -294,37 +303,40 @@ function Matrix({ data, rag, cellStyle, onOpen }) {
           <thead>
             <tr>
               <th className="mx-corner"></th>
-              {cols.map(s => <th key={s} className="mx-colh"><span>{s}</span></th>)}
-              <th className="mx-total-h">Partner</th>
+              {cols.map(h => <th key={h} className="mx-colh"><span>#{h}</span></th>)}
+              <th className="mx-total-h">Supplier</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(p => (
-              <tr key={p}>
-                <th className="mx-rowh">{p}</th>
-                {cols.map(s => {
-                  const c = data.matrix[p][s];
+            {rows.map(s => (
+              <tr key={s}>
+                <th className="mx-rowh">{s}</th>
+                {cols.map(h => {
+                  const c = data.hotelMatrix[s] && data.hotelMatrix[s][h];
                   const v = cellVisual(c);
                   return (
-                    <td key={s} className="mx-cell"
-                      onMouseEnter={() => c && setHover({ p, s, c })}
-                      onClick={() => c && onOpen({ type: 'cell', partner: p, supplier: s })}>
+                    <td key={h} className="mx-cell"
+                      onMouseEnter={() => c && setHover({ s, h, c })}
+                      onClick={() => c && onOpen({ type: 'hotcell', supplier: s, hotel: h })}>
                       {c ? <MatrixCell c={c} style={cellStyle} col={v.col} /> : <span className="mx-empty">–</span>}
                     </td>
                   );
                 })}
-                <td className="mx-total"><TotalChip value={rowHealth[p]} rag={healthRag(rowHealth[p])} /></td>
+                <td className="mx-total"><TotalChip value={rowHealth[s]} rag={healthRag(rowHealth[s])} /></td>
               </tr>
             ))}
             <tr className="mx-totalrow">
-              <th className="mx-rowh">Supplier</th>
-              {cols.map(s => <td key={s} className="mx-total"><TotalChip value={colHealth[s]} rag={healthRag(colHealth[s])} /></td>)}
+              <th className="mx-rowh">Hotel</th>
+              {cols.map(h => {
+                const hh = hotelHealth[h];
+                return <td key={h} className="mx-total">{hh != null ? <TotalChip value={hh} rag={healthRag(hh)} /> : <span className="mx-empty">–</span>}</td>;
+              })}
               <td className="mx-total"></td>
             </tr>
           </tbody>
         </table>
       </div>
-      {hover && <MatrixTip {...hover} />}
+      {hover && <HotelMatrixTip {...hover} />}
     </section>
   );
 }
@@ -346,14 +358,15 @@ function TotalChip({ value, rag }) {
   return <div className="mx-totalchip" style={{ color: col }}>{Math.round(value)}</div>;
 }
 
-function MatrixTip({ p, s, c }) {
+function HotelMatrixTip({ s, h, c }) {
   return (
     <div className="mx-tip">
-      <div className="mx-tip-head">{p} <span className="mx-tip-x">×</span> {s}</div>
+      <div className="mx-tip-head">{s} <span className="mx-tip-x">×</span> #{h}</div>
       <div className="mx-tip-rows">
         <div><span>Availability</span><b>{NF.pct(c.availability)}</b></div>
         <div><span>Competitiveness</span><b>{NF.pct(c.competitiveness)}</b></div>
         <div><span>Reliability</span><b>{NF.pct(c.reliability, 2)}</b></div>
+        <div><span>Latency</span><b>{NF.pct(c.latency)}</b></div>
       </div>
       <div className="mx-tip-foot">{NF.int(c.searches)} searches · {c.booked} booked</div>
     </div>

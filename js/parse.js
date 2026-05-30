@@ -79,11 +79,16 @@
       });
     }
 
-    /* ---- F6 pre-pass: dead search = all rows for search_id have shown = false ---- */
+    /* ---- F6 pre-pass + unique search index ---- */
     var searchHasShown = {};
+    var searchIdxMap = {};
+    var searchIdxCounter = 0;
     for (var j = 0; j < rows.length; j++) {
       var sid = rows[j].searchId;
-      if (searchHasShown[sid] === undefined) searchHasShown[sid] = false;
+      if (searchHasShown[sid] === undefined) {
+        searchHasShown[sid] = false;
+        searchIdxMap[sid] = searchIdxCounter++;
+      }
       if (rows[j].shown) searchHasShown[sid] = true;
     }
 
@@ -111,7 +116,7 @@
       if (!searchHasShown[r.searchId])                           mask |= F6;
 
       events[m] = [pIdx[r.partner], sIdx[r.supplier], r.hotel,
-                   r.shown, r.outcome, r.bval, r.margin, r.lat, mask, r.day];
+                   r.shown, r.outcome, r.bval, r.margin, r.lat, mask, r.day, searchIdxMap[r.searchId]];
     }
 
     /* ---- date label ---- */

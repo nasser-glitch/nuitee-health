@@ -6,7 +6,7 @@
      F4 High latency          F5 Competitive not shown  F6 Dead search
    Health = equally weighted average of availability, competitiveness, reliability (all as % success). */
 (function () {
-  var P = 0, S = 1, H = 2, SH = 3, O = 4, BV = 5, MG = 6, LT = 7, MK = 8, DY = 9;
+  var P = 0, S = 1, H = 2, SH = 3, O = 4, BV = 5, MG = 6, LT = 7, MK = 8, DY = 9, SI = 10;
   var F1 = 1, F2 = 2, F3 = 4, F4 = 8, F5 = 16, F6 = 32;
   var W = [1/4, 1/4, 1/4, 1/4];
 
@@ -24,19 +24,19 @@
     var sFilter = opts.suppliers && opts.suppliers.size ? opts.suppliers : null;
     var dFrom = opts.dayFrom || 1, dTo = opts.dayTo || 31;
 
-    function blank() { return { n: 0, f1: 0, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0, relfail: 0, latfail: 0, shown: 0, clicked: 0, booked: 0, bf: 0, bval: 0, margin: 0, lat: [], wk: [[0, 0], [0, 0], [0, 0], [0, 0]] }; }
+    function blank() { return { n: 0, f1: 0, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0, relfail: 0, latfail: 0, shown: 0, clicked: 0, booked: 0, bf: 0, bval: 0, margin: 0, lat: [], wk: [[0, 0], [0, 0], [0, 0], [0, 0]], sids: new Set() }; }
 
-    var supA = {}, partA = {}, supHotel = {}, supPartner = {}, supWk = {};
+    var supA = {}, partA = {}, supHotel = {}, supPartner = {}, supWk = {}, supHotelA = {};
     var cellA = {}; // p|s
-    SUPPLIERS.forEach(function (s) { supA[s] = blank(); supHotel[s] = {}; supPartner[s] = {}; supWk[s] = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]; });
+    SUPPLIERS.forEach(function (s) { supA[s] = blank(); supHotel[s] = {}; supPartner[s] = {}; supWk[s] = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]; supHotelA[s] = {}; });
     PARTNERS.forEach(function (p) { partA[p] = blank(); });
     PARTNERS.forEach(function (p) { SUPPLIERS.forEach(function (s) { cellA[p + '|' + s] = blank(); }); });
 
-    var totF5 = 0, totF6 = 0, totN = 0, totBval = 0, totMargin = 0, totBooked = 0;
+    var totF5 = 0, totF6 = 0, totN = 0, totBval = 0, totMargin = 0, totBooked = 0; var totSearchIds = new Set();
     var f5byP = {}, f6byS = {}, f6byP = {}, f5combo = {}, f6combo = {};
 
     function bump(o, e) {
-      o.n++; var m = e[MK];
+      o.n++; o.sids.add(e[SI]); var m = e[MK];
       if (m & F1) o.f1++; if (m & F2) o.f2++; if (m & F3) o.f3++; if (m & F4) o.f4++; if (m & F5) o.f5++; if (m & F6) o.f6++;
       if (m & F3) o.relfail++; if (m & F4) o.latfail++;
       if (e[SH]) o.shown++;
@@ -57,7 +57,8 @@
       var m = e[MK], fail = (m & (F1 | F2 | F3)) ? 1 : 0;  // availability + competitiveness + reliability
 
       bump(supA[sn], e); bump(partA[pn], e); bump(cellA[pn + '|' + sn], e);
-      totN++; totBval += e[BV]; totMargin += e[MG];
+      var hk = e[H]; if (!supHotelA[sn][hk]) supHotelA[sn][hk] = blank(); bump(supHotelA[sn][hk], e);
+      totN++; totSearchIds.add(e[SI]); totBval += e[BV]; totMargin += e[MG];
       if (e[O] === 3) totBooked++;
       if (m & F5) { totF5++; f5byP[pn] = (f5byP[pn] || 0) + 1; var k5 = pn + '|' + e[H]; f5combo[k5] = (f5combo[k5] || 0) + 1; }
       if (m & F6) { totF6++; f6byS[sn] = (f6byS[sn] || 0) + 1; f6byP[pn] = (f6byP[pn] || 0) + 1; var k6 = pn + '|' + sn; f6combo[k6] = (f6combo[k6] || 0) + 1; }
@@ -74,7 +75,7 @@
       var parts = Object.keys(supPartner[s]).map(function (p) { var d = supPartner[s][p]; return { partner: p, failRate: r1(100 * d.fail / d.n), n: d.n }; }).sort(function (a, b) { return b.failRate - a.failRate; }).slice(0, 2);
       var weekly = supWk[s].map(function (w) { return w[0] ? { avail: r1(100 * (1 - w[1] / w[0])), compet: r1(100 * (1 - w[2] / w[0])), rel: r2(100 * (1 - w[3] / w[0])) } : null; });
       return {
-        name: s, searches: o.n, availability: r1(av), competitiveness: r1(co), reliability: r2(re), latency: r1(la),
+        name: s, searches: o.sids.size, booked: o.booked, availability: r1(av), competitiveness: r1(co), reliability: r2(re), latency: r1(la),
         health: health(av, co, re, la), p95: p95(o.lat),
         f1: o.f1, f2: o.f2, f3: o.f3, f4: o.f4, f5: o.f5, f6: o.f6,
         donut: { f1: o.f1, f2: o.f2, f3: o.f3, f4: o.f4 },
@@ -99,7 +100,7 @@
       var av = 100 * (1 - d.f1 / d.n), co = 100 * (1 - d.f2 / d.n), re = 100 * (1 - d.relfail / d.n), la = 100 * (1 - d.latfail / d.n);
       var h = health(av, co, re, la);
       return {
-        searches: d.n, availability: r1(av), competitiveness: r1(co), reliability: r2(re), latency: r1(la),
+        searches: d.sids.size, availability: r1(av), competitiveness: r1(co), reliability: r2(re), latency: r1(la),
         health: h, failRate: r1(100 - h), booked: d.booked, shown: d.shown, clicked: d.clicked,
         conv: r2(100 * d.booked / d.n), margin: Math.round(d.margin), revenue: Math.round(d.bval),
         f1: d.f1, f2: d.f2, f3: d.f3, f4: d.f4, f5: d.f5, f6: d.f6
@@ -121,7 +122,7 @@
         return { supplier: s, health: health(av, co, re, la), n: d.n };
       }).filter(Boolean).sort(function (a, b) { return b.health - a.health; });
       return {
-        name: p, searched: o.n, shown: o.shown, clicked: o.clicked, booked: o.booked, bookFailed: o.bf,
+        name: p, searched: o.sids.size, shown: o.shown, clicked: o.clicked, booked: o.booked, bookFailed: o.bf,
         availability: r1(pav), competitiveness: r1(pco), reliability: r2(pre), latency: r1(pla), health: health(pav, pco, pre, pla),
         revenue: Math.round(o.bval), margin: Math.round(o.margin), marginShare: r1(100 * o.margin / totMarginAll),
         f5: o.f5, f5rate: r1(100 * o.f5 / o.n),
@@ -142,6 +143,18 @@
         var d = cellA[p + '|' + s];
         matrix[p][s] = d.n ? cellObj(d) : null;
       });
+    });
+
+    // ---- hotel matrix (supplier × hotel, top 15 hotels by volume) ----
+    var hotelTotals = {};
+    SUPPLIERS.forEach(function (s) {
+      Object.keys(supHotelA[s]).forEach(function (h) { hotelTotals[h] = (hotelTotals[h] || 0) + supHotelA[s][h].n; });
+    });
+    var topHotels = Object.keys(hotelTotals).sort(function (a, b) { return hotelTotals[b] - hotelTotals[a]; }).slice(0, 15);
+    var hotelMatrix = {};
+    SUPPLIERS.forEach(function (s) {
+      hotelMatrix[s] = {};
+      topHotels.forEach(function (h) { var d = supHotelA[s][h]; hotelMatrix[s][h] = d && d.n ? cellObj(d) : null; });
     });
 
     // ---- platform ----
@@ -165,7 +178,7 @@
     var worstSup = suppliers[0] || { name: '—', health: 100 };
     var worstPartner = partners[partners.length - 1] || { name: '—', conv: 0 };
     var summary = {
-      totalSearches: totN,
+      totalSearches: totSearchIds.size,
       bookingConv: r2(100 * overallConv), bookingBenchmark: 2.50,
       revenueAtRisk: Math.round(f5notBooked * overallConv * avgBval),
       revenueAtRiskAssumption: 'F5 searches that didn\'t book, recovered at platform baseline conversion (' + r2(100 * overallConv) + '%) × avg booking value ($' + Math.round(avgBval) + ')',
@@ -173,11 +186,12 @@
       topFailingPartner: { name: worstPartner.name, conv: worstPartner.conv, revenue: worstPartner.revenue },
       deadSearchRate: r2(100 * totF6 / Math.max(1, totN)),
       f5rate: r1(100 * totF5 / Math.max(1, totN)),
+      f5notBooked: f5notBooked, avgBookingValue: Math.round(avgBval),
       gmv: Math.round(totBval), margin: Math.round(totMargin), bookings: totBooked
     };
 
     return {
-      summary: summary, suppliers: suppliers, partners: partners, matrix: matrix,
+      summary: summary, suppliers: suppliers, partners: partners, matrix: matrix, hotelMatrix: hotelMatrix, topHotels: topHotels,
       platform: {
         f5rate: r1(100 * totF5 / Math.max(1, totN)), f5count: totF5, f5byPartner: f5byPartner,
         f6rate: r2(100 * totF6 / Math.max(1, totN)), f6count: totF6, f6bySupplier: f6bySupplier, f6byPartner: f6byPartner,
